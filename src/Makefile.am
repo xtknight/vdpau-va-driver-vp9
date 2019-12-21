@@ -35,6 +35,7 @@ source_h = \
 	vdpau_mixer.h		\
 	vdpau_subpic.h		\
 	vdpau_video.h		\
+	map.h			\
 	$(source_glx_h)		\
 	$(source_x11_h)
 
@@ -55,6 +56,7 @@ source_c = \
 	vdpau_mixer.c		\
 	vdpau_subpic.c		\
 	vdpau_video.c		\
+	map.c			\
 	$(source_glx_c)		\
 	$(source_x11_c)
 
@@ -75,6 +77,7 @@ EXTRA_DIST = \
 install-data-hook:
 	cd $(DESTDIR)$(LIBVA_DRIVERS_PATH) ;			\
 	for drv in $(DRIVERS); do				\
+            rm -f $${drv}_drv_video.so;                         \
 	    ln -s vdpau_drv_video.so $${drv}_drv_video.so;	\
 	done
 

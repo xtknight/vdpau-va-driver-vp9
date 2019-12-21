@@ -26,10 +26,13 @@
 #include "vdpau_dump.h"
 #include "utils.h"
 #include "put_bits.h"
+#include "map.h" // https://github.com/rxi/map
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #define DEBUG 1
 #include "debug.h"
-
 
 // Translates VdpDecoderProfile to VdpCodec
 VdpCodec get_VdpCodec(VdpDecoderProfile profile)
@@ -61,6 +64,8 @@ VdpCodec get_VdpCodec(VdpDecoderProfile profile)
     case VDP_DECODER_PROFILE_VC1_MAIN:
     case VDP_DECODER_PROFILE_VC1_ADVANCED:
         return VDP_CODEC_VC1;
+    case VDP_DECODER_PROFILE_VP9_PROFILE_0:
+        return VDP_CODEC_VP9;
     }
     return 0;
 }
@@ -81,6 +86,7 @@ VdpDecoderProfile get_VdpDecoderProfile(VAProfile profile)
     case VAProfileVC1Simple:    return VDP_DECODER_PROFILE_VC1_SIMPLE;
     case VAProfileVC1Main:      return VDP_DECODER_PROFILE_VC1_MAIN;
     case VAProfileVC1Advanced:  return VDP_DECODER_PROFILE_VC1_ADVANCED;
+    case VAProfileVP9Profile0:  return VDP_DECODER_PROFILE_VP9_PROFILE_0;
     default:                    break;
     }
     return (VdpDecoderProfile)-1;
@@ -143,17 +149,22 @@ get_max_ref_frames(
     int max_ref_frames = 2;
 
     switch (profile) {
-    case VDP_DECODER_PROFILE_H264_MAIN:
-    case VDP_DECODER_PROFILE_H264_HIGH:
-    {
-        /* level 4.1 limits */
-        unsigned int aligned_width  = (width + 15) & -16;
-        unsigned int aligned_height = (height + 15) & -16;
-        unsigned int surface_size   = (aligned_width * aligned_height * 3) / 2;
-        if ((max_ref_frames = (12 * 1024 * 1024) / surface_size) > 16)
-            max_ref_frames = 16;
-        break;
-    }
+        case VDP_DECODER_PROFILE_H264_MAIN:
+        case VDP_DECODER_PROFILE_H264_HIGH:
+        {
+            /* level 4.1 limits */
+            unsigned int aligned_width  = (width + 15) & -16;
+            unsigned int aligned_height = (height + 15) & -16;
+            unsigned int surface_size   = (aligned_width * aligned_height * 3) / 2;
+            if ((max_ref_frames = (12 * 1024 * 1024) / surface_size) > 16)
+                max_ref_frames = 16;
+            break;
+        }
+        case VDP_DECODER_PROFILE_VP9_PROFILE_0:
+        {
+            max_ref_frames = 3; // XXX: is this correct?
+            break;
+        }
     }
     return max_ref_frames;
 }
@@ -163,6 +174,8 @@ static inline int get_num_ref_frames(object_context_p obj_context)
 {
     if (obj_context->vdp_codec == VDP_CODEC_H264)
         return obj_context->vdp_picture_info.h264.num_ref_frames;
+    else if (obj_context->vdp_codec == VDP_CODEC_VP9)
+        return 3; // XXX: "any particular frame can make use of at most 3 reference frames"
     return 2;
 }
 
@@ -341,6 +354,31 @@ static const uint8_t ff_mpeg4_default_non_intra_matrix[64] = {
     23, 24, 25, 27, 28, 30, 31, 33,
 };
 
+/* VP9 8-Bit Quantization Coefficients, reverse lookup
+ * From <https://chromium.googlesource.com/chromium/src/+/master/media/filters/vp9_parser.cc>
+ * XXX: Is there a better way to do this?
+ * VA-API provides only the coefficients after looking them up in an array, but
+ * VDPAU wants the raw indices (qpYAc, qpYDc, qpChDc, qpChAc).
+ * 
+ * So we have to derive the original indices using reverse lookup below.
+ * Duplicate coefficients are matched to the first index in which they occur.
+ * That's why there is less than 256 entries, for DC.
+ * This is *not* a perfect reverse lookup, but seems close enough.
+ * These are fed into a makeshift hash table for faster lookup.
+ */
+static const int16_t vp9_dcq_8bit_coeff[239] = {4, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 87, 88, 90, 92, 93, 95, 96, 98, 99, 101, 102, 104, 105, 107, 108, 110, 111, 113, 114, 116, 117, 118, 120, 121, 123, 125, 127, 129, 131, 134, 136, 138, 140, 142, 144, 146, 148, 150, 152, 154, 156, 158, 161, 164, 166, 169, 172, 174, 177, 180, 182, 185, 187, 190, 192, 195, 199, 202, 205, 208, 211, 214, 217, 220, 223, 226, 230, 233, 237, 240, 243, 247, 250, 253, 257, 261, 265, 269, 272, 276, 280, 284, 288, 292, 296, 300, 304, 309, 313, 317, 322, 326, 330, 335, 340, 344, 349, 354, 359, 364, 369, 374, 379, 384, 389, 395, 400, 406, 411, 417, 423, 429, 435, 441, 447, 454, 461, 467, 475, 482, 489, 497, 505, 513, 522, 530, 539, 549, 559, 569, 579, 590, 602, 614, 626, 640, 654, 668, 684, 700, 717, 736, 755, 775, 796, 819, 843, 869, 896, 925, 955, 988, 1022, 1058, 1098, 1139, 1184, 1232, 1282, 1336};
+
+static const int16_t vp9_dcq_8bit_idx[239] = {0, 1, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22,   24, 25, 26, 27, 28, 29, 31, 32, 33, 34, 35, 36, 38, 39, 40, 41, 42, 44, 45, 46, 47, 48, 50, 51, 52, 53, 54, 56, 57, 58, 59, 61, 62, 63, 64, 65, 67, 68, 69, 70, 72, 73, 74, 75, 77, 78, 79, 80, 82, 83, 84, 85, 87, 88, 89, 91, 92, 93, 94, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255};
+
+static const int16_t vp9_acq_8bit_coeff[256] = {4, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 104, 106, 108, 110, 112, 114, 116, 118, 120, 122, 124, 126, 128, 130, 132, 134, 136, 138, 140, 142, 144, 146, 148, 150, 152, 155, 158, 161, 164, 167, 170, 173, 176, 179, 182, 185, 188, 191, 194, 197, 200, 203, 207, 211, 215, 219, 223, 227, 231, 235, 239, 243, 247, 251, 255, 260, 265, 270, 275, 280, 285, 290, 295, 300, 305, 311, 317, 323, 329, 335, 341, 347, 353, 359, 366, 373, 380, 387, 394, 401, 408, 416, 424, 432, 440, 448, 456, 465, 474, 483, 492, 501, 510, 520, 530, 540, 550, 560, 571, 582, 593, 604, 615, 627, 639, 651, 663, 676, 689, 702, 715, 729, 743, 757, 771, 786, 801, 816, 832, 848, 864, 881, 898, 915, 933, 951, 969, 988, 1007, 1026, 1046, 1066, 1087, 1108, 1129, 1151, 1173, 1196, 1219, 1243, 1267, 1292, 1317, 1343, 1369, 1396, 1423, 1451, 1479, 1508, 1537, 1567, 1597, 1628, 1660, 1692, 1725, 1759, 1793, 1828};
+
+static const int16_t vp9_acq_8bit_idx[256] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255};
+
+// Hash tables
+static map_int_t g_vp9DcQReverseLookup;
+static map_int_t g_vp9AcQReverseLookup;
+static bool g_vp9QuantMapsSetup = false;
+
 // Compute integer log2
 static inline int ilog2(uint32_t v)
 {
@@ -482,6 +520,35 @@ translate_VASliceDataBuffer(
                                           buf,
                                           slice_param->slice_data_size) < 0)
                 return 0;
+        }
+        return 1;
+    }
+
+    if (obj_context->vdp_codec == VDP_CODEC_VP9) {
+        /* Check we have the start code */
+        /* XXX: check for other codecs too? */
+        /* XXX: this assumes we get SliceParams before SliceData */
+        static const uint8_t start_code_prefix[3] = { 0x00, 0x00, 0x01 };
+        VASliceParameterBufferVP9 * const slice_params = obj_context->last_slice_params;
+        unsigned int i;
+        for (i = 0; i < obj_context->last_slice_params_count; i++) {
+            VASliceParameterBufferVP9 * const slice_param = &slice_params[i];
+            uint8_t *buf = (uint8_t *)obj_buffer->buffer_data + slice_param->slice_data_offset;
+            if (trace_enabled())
+                trace_print("translate_VASliceDataBuffer: VP9: process slice param #%d\n", i);
+
+            if (memcmp(buf, start_code_prefix, sizeof(start_code_prefix)) != 0) {
+                if (append_VdpBitstreamBuffer(obj_context,
+                                              start_code_prefix,
+                                              sizeof(start_code_prefix)) < 0)
+                    return 0;
+            }
+            if (append_VdpBitstreamBuffer(obj_context,
+                                          buf,
+                                          slice_param->slice_data_size) < 0) {
+                D(bug("ERROR: append_VdpBitstreamBuffer\n"));
+                return 0;
+            }
         }
         return 1;
     }
@@ -986,6 +1053,305 @@ translate_VASliceParameterBufferVC1(
     return 1;
 }
 
+// Translate VADecPictureParameterBufferVP9
+static int
+translate_VAPictureParameterBufferVP9(
+    vdpau_driver_data_t *driver_data,
+    object_context_p    obj_context,
+    object_buffer_p     obj_buffer
+)
+{
+    D(bug("translate_VAPictureParameterBufferVP9 [driver_data: %p, obj_context: %p, obj_buffer: %p]\n", driver_data, &obj_context, &obj_buffer));
+
+    // When translating parameters, look at these documents:
+    // http://git.videolan.org/?p=ffmpeg.git;a=blob;f=libavcodec/vp9.c;h=0eb92f8c08764c425c08c57393787b5c5d1d3808;hb=HEAD
+    // https://github.com/FFmpeg/FFmpeg/blob/1054752c563cbe978f16010ed57dfa23a41ee490/libavcodec/vdpau_vp9.c
+    // https://intel.github.io/libva/va__dec__vp9_8h_source.html
+    // https://vdpau.pages.freedesktop.org/libvdpau/vdpau_8h_source.html
+    // https://storage.googleapis.com/downloads.webmproject.org/docs/vp9/vp9-bitstream-specification-v0.6-20160331-draft.pdf
+    // https://chromium.googlesource.com/chromium/src/+/master/media/filters/vp9_uncompressed_header_parser.cc
+    // https://chromium.googlesource.com/chromium/src/+/master/media/filters/vp9_compressed_header_parser.cc
+    // https://download.nvidia.com/XFree86/Linux-x86_64/440.26/README/vdpausupport.html
+    // https://github.com/Intel-Media-SDK/MediaSDK/blob/master/_studio/shared/umc/codec/vp9_dec/src/umc_vp9_bitstream.cpp
+    // https://vdpau.pages.freedesktop.org/libvdpau/struct_vdp_picture_info_v_p9.html#a6338e4e40fa414bf7c1d7158087bc139
+
+    VdpPictureInfoVP9 * const pic_info = &obj_context->vdp_picture_info.vp9;
+    VADecPictureParameterBufferVP9 * const pic_param = obj_buffer->buffer_data;
+
+    //if (trace_enabled())
+    //    dump_VADecPictureParameterBufferVP9(pic_param);
+
+    // empty out pic_info
+    memset(pic_info, 0, sizeof(VdpPictureInfoVP9));
+
+    const int last_ref_index = pic_param->pic_fields.bits.last_ref_frame;
+    const int golden_ref_index = pic_param->pic_fields.bits.golden_ref_frame;
+    const int alt_ref_index = pic_param->pic_fields.bits.alt_ref_frame;
+
+    pic_info->width                                = pic_param->frame_width;
+    pic_info->height                            = pic_param->frame_height;
+
+    if (pic_param->reference_frames[last_ref_index] == VA_INVALID_ID) {
+        pic_info->lastReference = VDP_INVALID_HANDLE;
+    } else {
+        if (!translate_VASurfaceID(driver_data,
+                                   /*(VASurfaceID)*/pic_param->reference_frames[last_ref_index],
+                                   /*(VdpVideoSurface*)*/&pic_info->lastReference))
+        {
+            D(bug("ERROR: translate_VASurfaceID lastReference\n"));
+            return 0;
+        }
+    }
+
+    if (pic_param->reference_frames[golden_ref_index] == VA_INVALID_ID) {
+        pic_info->goldenReference = VDP_INVALID_HANDLE;
+    } else {
+        if (!translate_VASurfaceID(driver_data,
+                                   /*(VASurfaceID)*/pic_param->reference_frames[golden_ref_index],
+                                   /*(VdpVideoSurface*)*/&pic_info->goldenReference))
+        {
+            D(bug("ERROR: translate_VASurfaceID goldenReference\n"));
+            return 0;
+        }
+    }
+
+    if (pic_param->reference_frames[alt_ref_index] == VA_INVALID_ID) {
+        pic_info->altReference = VDP_INVALID_HANDLE;
+    } else {
+        if (!translate_VASurfaceID(driver_data,
+                               /*(VASurfaceID)*/pic_param->reference_frames[alt_ref_index],
+                               /*(VdpVideoSurface*)*/&pic_info->altReference))
+        {
+            D(bug("ERROR: translate_VASurfaceID altReference\n"));
+            return 0;
+        }
+    }
+
+    pic_info->colorSpace = 2; // BT709 (seems to be most common on YouTube). TODO: this needs to be read from 3 bits of the frame...but is not available in all frames
+    
+    pic_info->profile                            = pic_param->profile; // VP9 Profile definition value range [0..3]
+    // seems that even VDPAU needs [0..3], not VDP_DECODER_PROFILE...
+    // see ffmpeg: https://ffmpeg.org/doxygen/3.2/vp9_8c_source.html#l00513
+    
+    pic_info->frameContextIdx = pic_param->pic_fields.bits.frame_context_idx;
+    pic_info->keyFrame = (pic_param->pic_fields.bits.frame_type == 0); // frame_type: 0 KEY_FRAME / 1 NON_KEY_FRAME
+    pic_info->showFrame = pic_param->pic_fields.bits.show_frame;
+    pic_info->errorResilient = pic_param->pic_fields.bits.error_resilient_mode;
+    
+    // XXX: FIXME: ???? s->parallelmode = s->errorres ? 1 : get_bits1(&s->gb);
+    // this is probably already decoded at VA-API level: honor VA-API itself
+    pic_info->frameParallelDecoding = pic_param->pic_fields.bits.frame_parallel_decoding_mode;
+    
+    pic_info->subSamplingX = pic_param->pic_fields.bits.subsampling_x;
+    pic_info->subSamplingY = pic_param->pic_fields.bits.subsampling_y;
+    pic_info->intraOnly = pic_param->pic_fields.bits.intra_only;
+    pic_info->allowHighPrecisionMv = pic_param->pic_fields.bits.allow_high_precision_mv;
+    //pic_info->refreshEntropyProbs /*aka refreshctx */ = pic_param->error_resilient_mode ? 0 : refresh_frame_context
+    // XXX: FIXME: verify that this is the same: honor VA-API as this is probably decoded properly there
+    // check VA-API/Chromium code (seems to be already decoded in header as passed through properly)
+    pic_info->refreshEntropyProbs = pic_param->pic_fields.bits.refresh_frame_context;
+    
+    // https://github.com/FFmpeg/FFmpeg/blob/1054752c563cbe978f16010ed57dfa23a41ee490/libavcodec/vdpau_vp9.c#L104
+    pic_info->refFrameSignBias[0] = 0;
+    pic_info->refFrameSignBias[1] = pic_param->pic_fields.bits.last_ref_frame_sign_bias;
+    pic_info->refFrameSignBias[2] = pic_param->pic_fields.bits.golden_ref_frame_sign_bias;
+    pic_info->refFrameSignBias[3] = pic_param->pic_fields.bits.alt_ref_frame_sign_bias;
+
+    // https://chromium.googlesource.com/chromium/src/+/master/media/gpu/windows/d3d11_vp9_accelerator.cc
+    pic_info->bitDepthMinus8Luma = pic_param->bit_depth - 8;
+    pic_info->bitDepthMinus8Chroma = pic_param->bit_depth - 8;
+    
+    // /* loopfilter header data */   s->filter.level = get_bits(&s->gb, 6);
+    // filter_level/sharpness?
+    pic_info->loopFilterLevel = pic_param->filter_level;
+    pic_info->loopFilterSharpness = pic_param->sharpness_level;
+    
+    // XXX: ?????? lf_delta.enabled? not supported in VA-API?
+    pic_info->modeRefLfEnabled = 0;
+    // check if all elements in filter_level are equal to loopFilterLevel
+    // if true, delta should be disabled
+    
+    // probably encoded in filter_level in VASegmentParameterVP9
+    
+    // seems that delta enabled may be hard to ascertain from VA-API itself
+    // https://chromium.googlesource.com/chromium/src/media/+/master/filters/vp9_parser.cc#990
+    
+    pic_info->log2TileColumns = pic_param->log2_tile_columns;
+    pic_info->log2TileRows = pic_param->log2_tile_rows;
+    
+    pic_info->segmentEnabled = pic_param->pic_fields.bits.segmentation_enabled;
+    pic_info->segmentMapUpdate = pic_param->pic_fields.bits.segmentation_update_map;
+    pic_info->segmentMapTemporalUpdate = pic_param->pic_fields.bits.segmentation_temporal_update;
+    
+    // segmentFeatureMode, Enable, Data set in SliceParameter
+
+    for (int i = 0; i < 7; i++) {
+        pic_info->mbSegmentTreeProbs[i] = pic_param->mb_segment_tree_probs[i];
+    }
+    
+    for (int i = 0; i < 3; i++) {
+        pic_info->segmentPredProbs[i] = pic_param->segment_pred_probs[i];
+    }
+
+    // qpYAc, qpYDc, qpChDc, qpChAc set in SliceParameter
+
+    pic_info->activeRefIdx[0] = pic_param->pic_fields.bits.last_ref_frame;
+    pic_info->activeRefIdx[1] = pic_param->pic_fields.bits.golden_ref_frame;
+    pic_info->activeRefIdx[2] = pic_param->pic_fields.bits.alt_ref_frame;
+    
+    pic_info->resetFrameContext = pic_param->pic_fields.bits.reset_frame_context;
+    pic_info->mcompFilterType = pic_param->pic_fields.bits.mcomp_filter_type; // XXX needs more checking
+
+    // mbRefLfDelta, mbModeLfDelta need to be set in SliceParameter, but it
+    // may not be possible to perfectly derive them
+
+    pic_info->uncompressedHeaderSize = pic_param->frame_header_length_in_bytes;
+    pic_info->compressedHeaderSize = pic_param->first_partition_size;
+
+    //if (trace_enabled())
+    //    dump_VdpPictureInfoVP9(pic_info);
+
+    return 1;
+}
+
+// Translate VASliceParameterBufferVP9
+static int
+translate_VASliceParameterBufferVP9(
+    vdpau_driver_data_t *driver_data,
+    object_context_p    obj_context,
+    object_buffer_p     obj_buffer
+)
+{
+    VdpPictureInfoVP9 * const pic_info = &obj_context->vdp_picture_info.vp9;
+    VASliceParameterBufferVP9 * const slice_params = obj_buffer->buffer_data;
+    VASliceParameterBufferVP9 * const slice_param = &slice_params[obj_buffer->num_elements - 1];
+
+    D(bug("translate_VASliceParameterBufferVP9 [driver_data: %p, obj_context: %p, obj_buffer: %p, obj_buffer->num_elements: %d]\n", driver_data, &obj_context, &obj_buffer, obj_buffer->num_elements));
+
+    //if (trace_enabled())
+    //    dump_VASliceParameterBufferVP9(slice_param);
+
+    // segmentFeatureMode = segmentation_abs_or_delta_update
+    
+    // segmentation_abs_or_delta_update: 0 means delta. 1 means absolute.
+    // XXX: force to absolute? not sure if this information is available from VA-API
+    pic_info->segmentFeatureMode = 1;
+
+    // segment_reference is data for segment_reference feature
+
+    for (int i = 0; i < 8; i++) {
+        // XXX: go through the segments and set the features we can
+        // not sure if we can set more based on what VA-API gives us
+        VASegmentParameterVP9 *seg = &slice_param->seg_param[i];
+        pic_info->segmentFeatureEnable[i][0] = 0; //  = ???? q_enabled? [information not provided by VAAPI]
+        pic_info->segmentFeatureEnable[i][1] = 0; //  = ???? lf_enabled loop filter [information not provided by VAAPI]
+        pic_info->segmentFeatureEnable[i][2] = seg->segment_flags.fields.segment_reference_enabled; //  = ???? ref_enabled
+        pic_info->segmentFeatureEnable[i][3] = seg->segment_flags.fields.segment_reference_skipped; //  = ???? skip_enabled
+        
+        // the only data saved is for ref frame. the rest of the data should be left blank
+        pic_info->segmentFeatureData[i][0] = 0;
+        pic_info->segmentFeatureData[i][1] = 0;
+        pic_info->segmentFeatureData[i][2] = seg->segment_flags.fields.segment_reference; // reference enabled (unsigned 2-bit value according to 'segmentation_feature_(bits/signed)' structures)
+        pic_info->segmentFeatureData[i][3] = 0;
+    }
+
+    const size_t bit_depth_index = ((pic_info->bitDepthMinus8Luma + 8) == 8) ? 0 : 1;
+    if (bit_depth_index == 1) {
+        D(bug("ERROR: Only bit depth 8 supported for now.\n"));
+        // VDPAU only supports profile 0 to my knowledge,
+        // which only supports 8-bit bit depth
+        return 0;
+    }
+
+    // XXX: better way to do reverse lookup?
+    // Reverse lookup example:
+    // luma_ac_quant_scale=95:
+    // bit_depth is 8, so bit_depth_index is 0
+    // https://chromium.googlesource.com/chromium/src/+/master/media/filters/vp9_parser.cc
+    // so we look up where 95 is in kAcQLookup[0] (the 8-bit table)
+    // it's at index 88, so base Q index is 88.
+
+    // there are no duplicate values in 8-bit AC (very lucky!), and q_index is defined as an unsigned integer in ffmpeg(yac_qi) and spec as f(8) unsigned n-bit number
+    // q_index is an unsigned 8-bit number, which is max 255 anyway.
+
+    // note that deltas can be negative but we can detect that
+    // based on q_index itself
+
+    // XXX: for now, just look at the first segment
+    // not sure how to handle this case for other segments
+    VASegmentParameterVP9 *seg = &slice_param->seg_param[0];
+
+    // Derive qpYAc, qpYDc, qpChDc, qpChAc very roughly.
+    // Even though they are clamped to [0,255], after VDPAU
+    // looks at these values hopefully they will end up the
+    // same. [except for minor index lookup differences due to
+    // duplications in the DC table].
+
+    int *val = map_get(&g_vp9AcQReverseLookup, seg->luma_ac_quant_scale);
+    int q_index = 0;
+    if (val) {
+        q_index = *val;
+        if (trace_enabled())
+            trace_print("luma_ac_quant_scale=%d ==> q_index=%d\n", seg->luma_ac_quant_scale, q_index);
+    } else {
+        D(bug("ERROR: no q_index found for luma_ac_quant_scale=%d\n", seg->luma_ac_quant_scale));
+    }
+    pic_info->qpYAc = q_index;
+    
+    val = map_get(&g_vp9DcQReverseLookup, seg->luma_dc_quant_scale);
+    int delta_q_y_dc = 0;
+    if (val) {
+        delta_q_y_dc = *val - q_index;
+        if (trace_enabled())
+            trace_print("luma_dc_quant_scale=%d ==> delta_q_y_dc=%d\n", seg->luma_dc_quant_scale, delta_q_y_dc);
+    } else {
+        D(bug("ERROR: no delta_q_y_dc found for luma_dc_quant_scale=%d\n", seg->luma_dc_quant_scale));
+    }
+    pic_info->qpYDc = delta_q_y_dc;
+
+    val = map_get(&g_vp9DcQReverseLookup, seg->chroma_dc_quant_scale);
+    int delta_q_uv_dc = 0;
+    if (val) {
+        delta_q_uv_dc = *val - q_index;
+        if (trace_enabled())
+            trace_print("chroma_dc_quant_scale=%d ==> delta_q_uv_dc=%d\n", seg->chroma_dc_quant_scale, delta_q_uv_dc);
+    } else {
+        D(bug("ERROR: no delta_q_uv_dc found for chroma_dc_quant_scale=%d\n", seg->chroma_dc_quant_scale));
+    }
+    pic_info->qpChDc = delta_q_uv_dc;
+
+    val = map_get(&g_vp9AcQReverseLookup, seg->chroma_ac_quant_scale);
+    int delta_q_uv_ac = 0;
+    if (val) {
+        delta_q_uv_ac = *val - q_index;
+        if (trace_enabled())
+            trace_print("chroma_ac_quant_scale=%d ==> delta_q_uv_ac=%d\n", seg->chroma_ac_quant_scale, delta_q_uv_ac);
+    } else {
+        D(bug("ERROR: no delta_q_uv_ac found for chroma_ac_quant_scale=%d\n", seg->chroma_ac_quant_scale));
+    }
+    pic_info->qpChAc = delta_q_uv_ac;
+
+    // XXX: TODO: loop filter
+    // not sure if this is possible with the info VA-API gives us.
+
+    // XXX: is it ok just to look at segment 0?
+    // reset loop filter to 1,0,-1,-1
+    pic_info->mbRefLfDelta[0] = 1;
+    pic_info->mbRefLfDelta[1] = 0;
+    pic_info->mbRefLfDelta[2] = -1;
+    pic_info->mbRefLfDelta[3] = -1;
+    pic_info->mbModeLfDelta[0] = 0;
+    pic_info->mbModeLfDelta[1] = 0;
+
+    //if (trace_enabled())
+    //    dump_VdpPictureInfoVP9(pic_info); // dump updated pic_info
+
+    obj_context->last_slice_params       = obj_buffer->buffer_data;
+    obj_context->last_slice_params_count = obj_buffer->num_elements;
+
+    return 1;
+}
+
 // Translate VA buffer
 typedef int
 (*translate_buffer_func_t)(vdpau_driver_data_t *driver_data,
@@ -1023,6 +1389,8 @@ translate_buffer(
         _(H264, SliceParameter),
         _(VC1, PictureParameter),
         _(VC1, SliceParameter),
+        _(VP9, PictureParameter),
+        _(VP9, SliceParameter),
 #undef _
         { VDP_CODEC_VC1, VABitPlaneBufferType, translate_nothing },
         { 0, VASliceDataBufferType, translate_VASliceDataBuffer },
@@ -1063,7 +1431,8 @@ vdpau_QueryConfigProfiles(
         VAProfileH264High,
         VAProfileVC1Simple,
         VAProfileVC1Main,
-        VAProfileVC1Advanced
+        VAProfileVC1Advanced,
+        VAProfileVP9Profile0
     };
 
     int i, n = 0;
@@ -1118,6 +1487,9 @@ vdpau_QueryConfigEntrypoints(
     case VAProfileVC1Advanced:
         entrypoint = VAEntrypointVLD;
         break;
+    case VAProfileVP9Profile0:
+        entrypoint = VAEntrypointVLD;
+        break;
     default:
         entrypoint = 0;
         break;
@@ -1141,6 +1513,8 @@ vdpau_BeginPicture(
 )
 {
     VDPAU_DRIVER_DATA_INIT;
+
+    D(bug("vdpau_BeginPicture [ctx: %p, context: %d, render_target: %d]\n", ctx, context, render_target));
 
     object_context_p obj_context = VDPAU_CONTEXT(context);
     if (!obj_context)
@@ -1171,6 +1545,22 @@ vdpau_BeginPicture(
     case VDP_CODEC_VC1:
         obj_context->vdp_picture_info.vc1.slice_count = 0;
         break;
+    case VDP_CODEC_VP9:
+        // XXX: setting up these maps elsewhere would be more proper
+        if (!g_vp9QuantMapsSetup) {
+            map_init(&g_vp9DcQReverseLookup);
+            for (int i = 0; i < sizeof(vp9_dcq_8bit_coeff) / sizeof(int16_t); i++)
+            {
+                map_set(&g_vp9DcQReverseLookup, vp9_dcq_8bit_coeff[i], vp9_dcq_8bit_idx[i]);
+            }
+            map_init(&g_vp9AcQReverseLookup);
+            for (int i = 0; i < sizeof(vp9_acq_8bit_coeff) / sizeof(int16_t); i++)
+            {
+                map_set(&g_vp9AcQReverseLookup, vp9_acq_8bit_coeff[i], vp9_acq_8bit_idx[i]);
+            }
+            g_vp9QuantMapsSetup = true;
+        }
+        break;
     default:
         return VA_STATUS_ERROR_UNKNOWN;
     }
@@ -1191,6 +1581,8 @@ vdpau_RenderPicture(
     VDPAU_DRIVER_DATA_INIT;
     int i;
 
+    D(bug("vdpau_RenderPicture [ctx: %p, context: %d, buffers: %p, num_buffers: %d]\n", ctx, context, buffers, num_buffers));
+
     object_context_p obj_context = VDPAU_CONTEXT(context);
     if (!obj_context)
         return VA_STATUS_ERROR_INVALID_CONTEXT;
@@ -1202,6 +1594,9 @@ vdpau_RenderPicture(
     /* Verify that we got valid buffer references */
     for (i = 0; i < num_buffers; i++) {
         object_buffer_p obj_buffer = VDPAU_BUFFER(buffers[i]);
+
+        D(bug("... buffers[%d]->type: %s (%d)\n", i, string_of_VABufferType(obj_buffer->type), obj_buffer->type));
+
         if (!obj_buffer)
             return VA_STATUS_ERROR_INVALID_BUFFER;
     }
@@ -1209,6 +1604,7 @@ vdpau_RenderPicture(
     /* Translate buffers */
     for (i = 0; i < num_buffers; i++) {
         object_buffer_p obj_buffer = VDPAU_BUFFER(buffers[i]);
+
         if (!translate_buffer(driver_data, obj_context, obj_buffer))
             return VA_STATUS_ERROR_UNSUPPORTED_BUFFERTYPE;
         /* Release any buffer that is not VASliceDataBuffer */
@@ -1245,6 +1641,8 @@ vdpau_EndPicture(
     VDPAU_DRIVER_DATA_INIT;
     unsigned int i;
 
+    D(bug("vdpau_EndPicture [ctx: %p, context: %d]\n", ctx, context));
+    
     object_context_p obj_context = VDPAU_CONTEXT(context);
     if (!obj_context)
         return VA_STATUS_ERROR_INVALID_CONTEXT;
@@ -1270,6 +1668,9 @@ vdpau_EndPicture(
         case VDP_CODEC_VC1:
             dump_VdpPictureInfoVC1(&obj_context->vdp_picture_info.vc1);
             break;
+        case VDP_CODEC_VP9:
+            dump_VdpPictureInfoVP9(&obj_context->vdp_picture_info.vp9);
+            break;
         default:
             break;
         }
@@ -1277,6 +1678,7 @@ vdpau_EndPicture(
             dump_VdpBitstreamBuffer(&obj_context->vdp_bitstream_buffers[i]);
     }
 
+    D(bug("rendering to surface %x\n", obj_context->current_render_target));
     VAStatus va_status;
     VdpStatus vdp_status;
     vdp_status = ensure_decoder_with_max_refs(
@@ -1284,6 +1686,8 @@ vdpau_EndPicture(
         obj_context,
         get_num_ref_frames(obj_context)
     );
+
+    D(bug("vdp_status after ensure = %d\n", vdp_status));
     if (vdp_status == VDP_STATUS_OK)
         vdp_status = vdpau_decoder_render(
             driver_data,
@@ -1294,6 +1698,7 @@ vdpau_EndPicture(
             obj_context->vdp_bitstream_buffers
         );
     va_status = vdpau_get_VAStatus(vdp_status);
+    D(bug("vdp_status after render = %d\n", vdp_status));
 
     /* XXX: assume we are done with rendering right away */
     obj_context->current_render_target = VA_INVALID_SURFACE;

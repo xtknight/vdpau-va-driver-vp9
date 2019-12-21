@@ -54,6 +54,18 @@ void dump_VdpPictureInfoH264(VdpPictureInfoH264 *pic_info)
 void dump_VdpPictureInfoVC1(VdpPictureInfoVC1 *pic_info)
     attribute_hidden;
 
+// Dumps VdpPictureInfoVP9
+void dump_VdpPictureInfoVP9(VdpPictureInfoVP9 *pic_info)
+    attribute_hidden;
+
+// Dumps VADecPictureParameterBufferVP9
+void dump_VADecPictureParameterBufferVP9(VADecPictureParameterBufferVP9 *pic_param)
+    attribute_hidden;
+
+// Dumps VASliceParameterBufferVP9
+void dump_VASliceParameterBufferVP9(VASliceParameterBufferVP9 *slice_param)
+    attribute_hidden;
+
 // Dumps VdpBitstreamBuffer
 void dump_VdpBitstreamBuffer(VdpBitstreamBuffer *bitstream_buffer)
     attribute_hidden;

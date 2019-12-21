@@ -84,6 +84,7 @@ const char *string_of_VdpCodec(VdpCodec codec)
         _(MPEG4);
         _(H264);
         _(VC1);
+        _(VP9);
 #undef _
     }
     return str;
@@ -93,23 +94,81 @@ const char *string_of_VdpCodec(VdpCodec codec)
 #define TRACE               trace_print
 #define INDENT(INC)         trace_indent(INC)
 #define DUMPi(S, M)         TRACE("." #M " = %d,\n", S->M)
+#define DUMPu(S, M)         TRACE("." #M " = %u,\n", S->M)
 #define DUMPx(S, M)         TRACE("." #M " = 0x%08x,\n", S->M)
 #define DUMPp(S, M)         TRACE("." #M " = %p,\n", S->M)
 #define DUMPm(S, M, I, J)   dump_matrix_NxM(#M, (uint8_t *)S->M, I, J, I * J)
+#define DUMPm16(S, M, I, J) dump_matrix_NxM_short(#M, (uint16_t *)S->M, I, J, I * J)
+#define DUMPm32(S, M, I, J) dump_matrix_NxM_int(#M, (uint32_t *)S->M, I, J, I * J)
 #else
 #define trace_enabled()     (0)
 #define do_nothing()        do { } while (0)
 #define TRACE(FORMAT,...)   do_nothing()
 #define INDENT(INC)         do_nothing()
 #define DUMPi(S, M)         do_nothing()
+#define DUMPu(S, M)         do_nothing()
 #define DUMPx(S, M)         do_nothing()
 #define DUMPp(S, M)         do_nothing()
 #define DUMPm(S, M, I, J)   do_nothing()
+#define DUMPm16(S, M, I, J) do_nothing()
+#define DUMPm32(S, M, I, J) do_nothing()
 #endif
 
 // Dumps matrix[N][M] = N rows x M columns (uint8_t)
 static void
 dump_matrix_NxM(const char *label, const uint8_t *matrix, int N, int M, int L)
+{
+    int i, j, n = 0;
+
+    TRACE(".%s = {\n", label);
+    INDENT(1);
+    for (j = 0; j < N; j++) {
+        for (i = 0; i < M; i++, n++) {
+            if (n >= L)
+                break;
+            if (i > 0)
+                TRACE(", ");
+            TRACE("0x%02x", matrix[n]);
+        }
+        if (j < (N - 1))
+            TRACE(",");
+        TRACE("\n");
+        if (n >= L)
+            break;
+    }
+    INDENT(-1);
+    TRACE("}\n");
+}
+
+// Dumps matrix[N][M] = N rows x M columns (uint16_t)
+static void
+dump_matrix_NxM_short(const char *label, const uint16_t *matrix, int N, int M, int L)
+{
+    int i, j, n = 0;
+
+    TRACE(".%s = {\n", label);
+    INDENT(1);
+    for (j = 0; j < N; j++) {
+        for (i = 0; i < M; i++, n++) {
+            if (n >= L)
+                break;
+            if (i > 0)
+                TRACE(", ");
+            TRACE("0x%02x", matrix[n]);
+        }
+        if (j < (N - 1))
+            TRACE(",");
+        TRACE("\n");
+        if (n >= L)
+            break;
+    }
+    INDENT(-1);
+    TRACE("}\n");
+}
+
+// Dumps matrix[N][M] = N rows x M columns (uint32_t)
+static void
+dump_matrix_NxM_int(const char *label, const uint32_t *matrix, int N, int M, int L)
 {
     int i, j, n = 0;
 
@@ -295,6 +354,148 @@ void dump_VdpPictureInfoVC1(VdpPictureInfoVC1 *pic_info)
     DUMPi(pic_info, maxbframes);
     DUMPi(pic_info, deblockEnable);
     DUMPi(pic_info, pquant);
+    INDENT(-1);
+    TRACE("};\n");
+    INDENT(-1);
+}
+
+// Dumps VADecPictureParameterBufferVP9
+void dump_VADecPictureParameterBufferVP9(VADecPictureParameterBufferVP9 *pic_param)
+{
+    INDENT(1);
+    TRACE("VADecPictureParameterBufferVP9 = {\n");
+    INDENT(1);
+    DUMPi(pic_param, frame_width);
+    DUMPi(pic_param, frame_height);
+    DUMPm32(pic_param, reference_frames, 1, 8);
+    DUMPi(pic_param, pic_fields.bits.subsampling_x);
+    DUMPi(pic_param, pic_fields.bits.subsampling_y);
+    DUMPi(pic_param, pic_fields.bits.frame_type);
+    DUMPi(pic_param, pic_fields.bits.show_frame);
+    DUMPi(pic_param, pic_fields.bits.error_resilient_mode);
+    DUMPi(pic_param, pic_fields.bits.intra_only);
+    DUMPi(pic_param, pic_fields.bits.allow_high_precision_mv);
+    DUMPi(pic_param, pic_fields.bits.mcomp_filter_type);
+    DUMPi(pic_param, pic_fields.bits.frame_parallel_decoding_mode);
+    DUMPi(pic_param, pic_fields.bits.reset_frame_context);
+    DUMPi(pic_param, pic_fields.bits.refresh_frame_context);
+    DUMPi(pic_param, pic_fields.bits.frame_context_idx);
+    DUMPi(pic_param, pic_fields.bits.segmentation_enabled);
+    DUMPi(pic_param, pic_fields.bits.segmentation_temporal_update);
+    DUMPi(pic_param, pic_fields.bits.segmentation_update_map);
+    DUMPi(pic_param, pic_fields.bits.last_ref_frame);
+    DUMPi(pic_param, pic_fields.bits.last_ref_frame_sign_bias);
+    DUMPi(pic_param, pic_fields.bits.golden_ref_frame);
+    DUMPi(pic_param, pic_fields.bits.golden_ref_frame_sign_bias);
+    DUMPi(pic_param, pic_fields.bits.alt_ref_frame);
+    DUMPi(pic_param, pic_fields.bits.alt_ref_frame_sign_bias);
+    DUMPi(pic_param, pic_fields.bits.lossless_flag);
+    DUMPi(pic_param, filter_level);
+    DUMPi(pic_param, sharpness_level);
+    DUMPi(pic_param, log2_tile_rows);
+    DUMPi(pic_param, log2_tile_columns);
+    DUMPi(pic_param, frame_header_length_in_bytes);
+    DUMPi(pic_param, first_partition_size);
+    DUMPm(pic_param, mb_segment_tree_probs, 1, 7);
+    DUMPm(pic_param, segment_pred_probs, 1, 3);
+    DUMPi(pic_param, profile);
+    DUMPi(pic_param, bit_depth);
+    INDENT(-1);
+    TRACE("};\n");
+    INDENT(-1);
+}
+
+// Dumps VASegmentParameterVP9
+static void
+dump_VASegmentParameterVP9(VASegmentParameterVP9 *rf, const char *label)
+{
+    TRACE(".%s = {\n", label);
+    INDENT(1);
+    DUMPi(rf, segment_flags.value);
+    INDENT(1);
+    DUMPi(rf, segment_flags.fields.segment_reference_enabled);
+    DUMPi(rf, segment_flags.fields.segment_reference);
+    DUMPi(rf, segment_flags.fields.segment_reference_skipped);
+    INDENT(-1);
+    DUMPm(rf, filter_level, 4, 2);
+    DUMPi(rf, luma_ac_quant_scale);
+    DUMPi(rf, luma_dc_quant_scale);
+    DUMPi(rf, chroma_ac_quant_scale);
+    DUMPi(rf, chroma_dc_quant_scale);
+    INDENT(-1);
+    TRACE("}\n");
+}
+
+// Dumps VASliceParameterBufferVP9
+void dump_VASliceParameterBufferVP9(VASliceParameterBufferVP9 *slice_param)
+{
+    INDENT(1);
+    TRACE("VASliceParameterBufferVP9 = {\n");
+    INDENT(1);
+    DUMPu(slice_param, slice_data_size);
+    DUMPu(slice_param, slice_data_offset);
+    DUMPu(slice_param, slice_data_flag);
+    for (int i = 0; i < 8; i++) {
+        char label[100];
+        sprintf(label, "seg_param[%d]", i);
+        dump_VASegmentParameterVP9(&slice_param->seg_param[i], label);
+    }
+    INDENT(-1);
+    TRACE("};\n");
+    INDENT(-1);
+}
+
+// Dumps VdpPictureInfoVP9
+void dump_VdpPictureInfoVP9(VdpPictureInfoVP9 *pic_info)
+{
+    INDENT(1);
+    TRACE("VdpPictureInfoVP9 = {\n");
+    INDENT(1);
+    DUMPi(pic_info, width);
+    DUMPi(pic_info, height);
+    DUMPx(pic_info, lastReference);
+    DUMPx(pic_info, goldenReference);
+    DUMPx(pic_info, altReference);
+    DUMPi(pic_info, colorSpace);
+    DUMPi(pic_info, profile);
+    DUMPi(pic_info, frameContextIdx);
+    DUMPi(pic_info, keyFrame);
+    DUMPi(pic_info, showFrame);
+    DUMPi(pic_info, errorResilient);
+    DUMPi(pic_info, frameParallelDecoding);
+    DUMPi(pic_info, subSamplingX);
+    DUMPi(pic_info, subSamplingY);
+    DUMPi(pic_info, intraOnly);
+    DUMPi(pic_info, allowHighPrecisionMv);
+    DUMPi(pic_info, refreshEntropyProbs);
+    DUMPm(pic_info, refFrameSignBias, 1, 4);
+    DUMPi(pic_info, bitDepthMinus8Luma);
+    DUMPi(pic_info, bitDepthMinus8Chroma);
+    DUMPi(pic_info, loopFilterLevel);
+    DUMPi(pic_info, loopFilterSharpness);
+    DUMPi(pic_info, modeRefLfEnabled);
+    DUMPi(pic_info, log2TileColumns);
+    DUMPi(pic_info, log2TileRows);
+    DUMPi(pic_info, segmentEnabled);
+    DUMPi(pic_info, segmentMapUpdate);
+    DUMPi(pic_info, segmentMapTemporalUpdate);
+    DUMPi(pic_info, segmentFeatureMode);
+    DUMPm(pic_info, segmentFeatureEnable, 8, 4);
+    DUMPm16(pic_info, segmentFeatureData, 8, 4);
+    DUMPm(pic_info, mbSegmentTreeProbs, 1, 7);
+    DUMPm(pic_info, segmentPredProbs, 1, 3);
+    DUMPm(pic_info, reservedSegment16Bits, 1, 2);
+    DUMPi(pic_info, qpYAc);
+    DUMPi(pic_info, qpYDc);
+    DUMPi(pic_info, qpChDc);
+    DUMPi(pic_info, qpChAc);
+    DUMPm32(pic_info, activeRefIdx, 1, 3); // XXX: unsigned int?
+    DUMPi(pic_info, resetFrameContext);
+    DUMPi(pic_info, mcompFilterType);
+    DUMPm32(pic_info, mbRefLfDelta, 1, 4); // XXX: unsigned int?
+    DUMPm32(pic_info, mbModeLfDelta, 1, 2); // XXX: unsigned int?
+    DUMPi(pic_info, uncompressedHeaderSize);
+    DUMPi(pic_info, compressedHeaderSize);
     INDENT(-1);
     TRACE("};\n");
     INDENT(-1);
