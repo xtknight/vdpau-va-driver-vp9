@@ -37,6 +37,8 @@ That's how I started. It includes information on everything you need, except thi
    nvidia-settings should show "VP9" under X Screen/VDPAU Information/Base Information
    ![NVIDIA VDPAU Settings VP9](doc/img/nvidia-settings-vp9.png "NVIDIA VDPAU Settings VP9")
 
+   vdpau-info will not report VP9 support, unless you have a patched version of it (unsure if this is available yet).
+
 3. Chromium with VAAPI patch (NOT Google Chrome)
 4. VDPAU latest include headers (for compiling this patch): https://gitlab.freedesktop.org/ManojBonda/libvdpau
 
