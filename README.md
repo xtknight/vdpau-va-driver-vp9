@@ -1,5 +1,5 @@
 # vdpau-va-driver-vp9
-Experimental VP9 codec support for vdpau-va-driver (NVIDIA VDPAU-VAAPI wrapper) and chromium-vaapi
+Experimental VP9 codec support for vdpau-va-driver (NVIDIA VDPAU-VAAPI wrapper) and chromium-vaapi. This has only been tested on Ubuntu 19.10 (Linux), so I'm really not sure if it works on anything else but "may". In my experience the patchsets vary per distro and some just didn't work at all on my Ubuntu, so keep this in mind when trying the patch. However, my modifications themselves should not be distro-specific.
 
 Forked off Ubuntu vdpau-va-driver (which includes some patches over the original freedesktop code):
 https://launchpad.net/~saiarcot895/+archive/ubuntu/chromium-beta/+sourcepub/10036592/+listing-archive-extra
