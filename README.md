@@ -167,15 +167,18 @@ Most heavy-lifting occurs in src/vdpau_decode.c
 ## Tips
 
 Using VDPAU_VIDEO_DEBUG/VDPAU_VIDEO_TRACE and dump_* commands is a good way to test things.
-I also compared VDPAU calls to ffmpeg output for testing (although keep in mind ffmpeg may also call get_bits yuv commands to get video surface data for encoding)
+
+I also compared VDPAU calls to ffmpeg output for testing (although keep in mind ffmpeg may also call get_bits yuv commands to get video surface data for encoding). This is just a simple command to convert the stream to a TS file, but in the process it uses VDPAU for decoding.
 
 ```
 rm -f /tmp/out1.ts
 ffmpeg -hwaccel vdpau -i ~/Downloads/Profile_0_8bit/buf/crowd_run_1080X512_fr30_bd8_8buf_l3.webm -strict -1 /tmp/out1.ts
 ```
 
-VP9 test video pack: https://www.webmproject.org/vp9/levels/#test-bitstreams / https://storage.googleapis.com/downloads.webmproject.org/vp9/decoder-test-streams/Profile_0_8bit.zip
-VP9 8k test video: https://commons.wikimedia.org/wiki/File:First_8K_Video_from_Space_-_Ultra_HD_VP9.webm
+## Test Streams
+
+1. VP9 test video pack: https://www.webmproject.org/vp9/levels/#test-bitstreams / https://storage.googleapis.com/downloads.webmproject.org/vp9/decoder-test-streams/Profile_0_8bit.zip
+2. VP9 8k test video: https://commons.wikimedia.org/wiki/File:First_8K_Video_from_Space_-_Ultra_HD_VP9.webm
 
 # Screenshots
 
