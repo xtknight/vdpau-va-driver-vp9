@@ -123,7 +123,7 @@ done
 
 # Using
 
-Launch chromium-vaapi without using extensions like h264ify and try some 4k videos. It works with lower resolutions too but many CPUs are already fast enough to decode 1080p so it would be hard to notice. It may also work with 8k depending on your card and/or setup.
+Launch chromium-browser from chromium-vaapi package without using extensions like h264ify and try some 4k videos. It works with lower resolutions too but many CPUs are already fast enough to decode 1080p so it would be hard to notice. It may also work with 8k depending on your card and/or setup.
 
 Right click the YouTube video and click 'Stats for Nerds' to ensure codec starts with vp09.00. (VP9 profile 0). Here's an example 4k@60fps video in VP9 (as of writing): https://www.youtube.com/watch?v=aqz-KE-bpKQ
 
