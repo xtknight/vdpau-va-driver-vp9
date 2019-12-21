@@ -133,7 +133,7 @@ Depending on how fast your CPU is, it may actually hard to *prove* that the GPU 
 
 # Debugging
 
-Executing these commands in the shell (terminal) and then running chromium-browser from the same shell will activate them.
+Executing these commands in the shell (terminal) and then running chromium-browser from the same shell will activate them. Note that printing a large buffer of output through debug flags or functions may cause more dropped frames during playback.
 
 ## vdpau-va-driver
 Verbose debug messages
