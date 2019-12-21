@@ -11,7 +11,7 @@ https://github.com/rxi/map
 
 This adds experimental NVIDIA hardware video acceleration support to vdpau-va-driver for videos encoded using VP9 Profile 0 8-bit color depth. This seems to include most of the latest and greatest 4k and 8k videos I've used on YouTube that are hardest on the CPU, also available at lower resolutions in the same codec. As of writing, VP9 Profile 1-3 are not supported in the NVIDIA VDPAU library itself, so support for those cannot be added here either. VP8 also is not supported.
 
-To check whether your GPU can decode VP9, please check the NVDEC support matrix. I believe that this should match the VDPAU capabilities.
+To check whether your GPU can decode VP9, please check the NVDEC support matrix. I believe that this should match the VDPAU capabilities. The only exception is that VDPAU supports only Profile 0, so don't expect support for Profile 1-3 even if your GPU supports them in NVDEC. Also, VDPAU does not support VP8, H.265, or AV1 and may have other limitations.
 
 https://developer.nvidia.com/video-encode-decode-gpu-support-matrix
 
@@ -34,13 +34,12 @@ That's how I started. It includes information on everything you need, except thi
 1. GPU with VP9 NVDEC decode support: https://developer.nvidia.com/video-encode-decode-gpu-support-matrix
 2. NVIDIA Linux video driver (only tested with 440.44 so far; not sure what the minimum version is for VP9 support)
 
-   nvidia-settings should show "VP9" under X Screen/VDPAU Information/Base Information
+   vdpauinfo will not report VP9 support, unless you have a patched version of it (unsure if this is available yet). Use nvidia-settings instead. It should show "VP9" under X Screen/VDPAU Information/Base Information
+   
    ![NVIDIA VDPAU Settings VP9](doc/img/nvidia-settings-vp9.png "NVIDIA VDPAU Settings VP9")
 
-   vdpau-info will not report VP9 support, unless you have a patched version of it (unsure if this is available yet).
-
 3. Chromium with VAAPI patch (NOT Google Chrome)
-4. VDPAU latest include headers (for compiling this patch): https://gitlab.freedesktop.org/ManojBonda/libvdpau
+4. Latest headers for VDPAU with VP9 patch (for compiling this patch): https://gitlab.freedesktop.org/ManojBonda/libvdpau
 
 # Limitations and Disclaimers
 
