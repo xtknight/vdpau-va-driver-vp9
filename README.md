@@ -49,7 +49,7 @@ This is extremely experimental, and roughly half of the VP9 codec probably isn't
 1. Getting this patch to work well enough
 2. Getting 8k video HW accel to work, because it seems to work on Windows
 3. Most likely out of the scope of VDPAU, but for hardware acceleration on Linux/web browsers in general: VP9 Profiles 1-3, AV1, HEVC H.265, more native support for VDPAU/Cuvid/NVDEC/NVENC in Chromium, Firefox, etc, etc...
-4. Stretch goal: getting this actually implemented in Chromium or Firefox on Linux platforms
+4. Stretch goal: achieving HW accel feature parity with Windows on Chromium or Firefox on Linux distributions officially
 
 # Compiling
 
