@@ -42,6 +42,24 @@ That's how I started. It includes information on everything you need, except thi
 
 3. Chromium with VAAPI patch (NOT Google Chrome)
 4. Latest headers for VDPAU with VP9 patch (for compiling this patch): https://gitlab.freedesktop.org/ManojBonda/libvdpau
+   This requires meson to compile.
+   
+        $ git clone https://gitlab.freedesktop.org/ManojBonda/libvdpau.git
+        $ cd libvdpau
+        $ meson -Dprefix=/usr build
+        $ ninja -C build
+        $ sudo ninja -C build install
+   
+   Messages (output should probably be /usr/include/vdpau and /usr/lib/x86_64-linux-gnu if on 64-bit):
+   ```
+   Installing subdir /tmp/libvdpau/include/vdpau to /usr/include/vdpau
+   Installing /tmp/libvdpau/include/vdpau/vdpau_x11.h to /usr/include/vdpau
+   Installing /tmp/libvdpau/include/vdpau/vdpau.h to /usr/include/vdpau
+   Installing src/libvdpau.so.1.0.0 to /usr/lib/x86_64-linux-gnu
+   Installing trace/libvdpau_trace.so.1.0.0 to /usr/lib/x86_64-linux-gnu/vdpau
+   Installing /tmp/libvdpau/src/vdpau_wrapper.cfg to /etc
+   Installing /tmp/libvdpau/build/meson-private/vdpau.pc to /usr/lib/x86_64-linux-gnu/pkgconfig
+   ```
 
 # Unimplemented Features
 
@@ -74,6 +92,35 @@ Don't forget to use the latest VDPAU headers with VP9 support. There may be othe
     $ make
     $ sudo make install
 
+Messages (output should probably be /usr/lib/x86_64-linux-gnu/dri if on 64-bit):
+```
+----------------------------------------------------------------------
+Libraries have been installed in:
+   /usr/lib/x86_64-linux-gnu/dri
+
+If you ever happen to want to link against installed libraries
+in a given directory, LIBDIR, you must either use libtool, and
+specify the full pathname of the library, or use the '-LLIBDIR'
+flag during linking and do at least one of the following:
+   - add LIBDIR to the 'LD_LIBRARY_PATH' environment variable
+     during execution
+   - add LIBDIR to the 'LD_RUN_PATH' environment variable
+     during linking
+   - use the '-Wl,-rpath -Wl,LIBDIR' linker flag
+   - have your system administrator add LIBDIR to '/etc/ld.so.conf'
+
+See any operating system documentation about shared libraries for
+more information, such as the ld(1) and ld.so(8) manual pages.
+----------------------------------------------------------------------
+make  install-data-hook
+make[3]: Entering directory '/home/andy/dev/vdpau-va-driver-vp9/src'
+cd /usr/lib/x86_64-linux-gnu/dri ;			\
+for drv in nvidia s3g ; do				\
+            rm -f ${drv}_drv_video.so;                         \
+    ln -s vdpau_drv_video.so ${drv}_drv_video.so;	\
+done
+```
+
 # Using
 
 Launch chromium-vaapi without using extensions like h264ify and try some 4k videos. It works with lower resolutions too but many CPUs are already fast enough to decode 1080p so it would be hard to notice. It may also work with 8k depending on your card and/or setup.
@@ -83,6 +130,8 @@ Right click the YouTube video and click 'Stats for Nerds' to ensure codec starts
 Depending on how fast your CPU is, it may actually hard to *prove* that the GPU is being used. Although those with slower CPUs will probably notice a lot easier. There's still going to be some CPU usage, so don't be surprised. Exactly why, I'm not sure, but may be related to issues in the frame handling that can be optimized. And I need to do more testing to see how much of a problem that really is. Based on nvidia-smi, my GTX 1060 seems to be around 25-40% usage for 4k@60fps if the video is playing and only around 15% if the video is paused. For me CPU usage is reduced from around ~450% (multi-core) to around ~50-100% if I disable HW accel in Chromium through the flags. It's a big improvement, at least, the difference between potentially being able to play a video smoothly without dropped frames and not being able to do so.
 
 # Debugging
+
+Executing these commands in the shell (terminal) and then running chromium-browser from the same shell will activate them.
 
 ## vdpau-va-driver
 Verbose debug messages
