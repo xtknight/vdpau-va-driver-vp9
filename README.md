@@ -22,6 +22,10 @@ That's how I started. It includes information on everything you need, except thi
 
 1. GPU with VP9 NVDEC decode support: https://developer.nvidia.com/video-encode-decode-gpu-support-matrix
 2. NVIDIA Linux video driver (only tested with 440.44 so far; not sure what the minimum version is for VP9 support)
+
+   nvidia-settings should show "VP9" under X Screen/VDPAU Information/Base Information
+   ![NVIDIA VDPAU Settings VP9](doc/img/nvidia-settings-vp9.png "NVIDIA VDPAU Settings VP9")
+
 3. Chromium with VAAPI patch (NOT Google Chrome)
 4. VDPAU latest include headers (for compiling this patch): https://gitlab.freedesktop.org/ManojBonda/libvdpau
 
