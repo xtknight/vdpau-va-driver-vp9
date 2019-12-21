@@ -40,6 +40,14 @@ That's how I started. It includes information on everything you need, except thi
 3. Chromium with VAAPI patch (NOT Google Chrome)
 4. VDPAU latest include headers (for compiling this patch): https://gitlab.freedesktop.org/ManojBonda/libvdpau
 
+# Limitations and Disclaimers
+
+This is extremely experimental, and roughly half of the VP9 codec probably isn't even implemented at all. That's denoted by 'XXX' comments in the code. But, based on my testing I haven't found significant video artifacts yet. It appears that most videos may not use the features that aren't implemented or maybe they just don't make enough of a difference visually, or I just haven't noticed yet; I'm really not sure, but I'm just providing this in good faith because it "seems to work". I would appreciate bug reports, contributions, etc. though and will try to look at them when I have time.
+
+# Future Work
+
+Most likely out of the scope of VDPAU, but for hardware acceleration in general: VP9 Profiles 1-3, AV1, HEVC H.265, more native support for VDPAU/Cuvid/NVDEC/NVENC in Chromium, etc, etc...
+
 # Compiling
 
 Don't forget to use the latest VDPAU headers with VP9 support. There may be other dependencies depending on your distro.
