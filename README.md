@@ -158,6 +158,25 @@ export VDPAU_NVIDIA_DEBUG=3
 export VDPAU_TRACE_FILE=chromium-vdpau.log
 ```
 
+## Source Code
+
+The bulk of the initial support code is here: https://github.com/xtknight/vdpau-va-driver-vp9/commit/894fe2e1b0dedbf02dca72d0a2c632a41adc701b
+
+Most heavy-lifting occurs in src/vdpau_decode.c
+
+## Tips
+
+Using VDPAU_VIDEO_DEBUG/VDPAU_VIDEO_TRACE and dump_* commands is a good way to test things.
+I also compared VDPAU calls to ffmpeg output for testing (although keep in mind ffmpeg may also call get_bits yuv commands to get video surface data for encoding)
+
+```
+rm -f /tmp/out1.ts
+ffmpeg -hwaccel vdpau -i ~/Downloads/Profile_0_8bit/buf/crowd_run_1080X512_fr30_bd8_8buf_l3.webm -strict -1 /tmp/out1.ts
+```
+
+VP9 test video pack: https://www.webmproject.org/vp9/levels/#test-bitstreams / https://storage.googleapis.com/downloads.webmproject.org/vp9/decoder-test-streams/Profile_0_8bit.zip
+VP9 8k test video: https://commons.wikimedia.org/wiki/File:First_8K_Video_from_Space_-_Ultra_HD_VP9.webm
+
 # Screenshots
 
 ![Screenshot 1](doc/img/vp9_sample_1.png "Screenshot 1")
