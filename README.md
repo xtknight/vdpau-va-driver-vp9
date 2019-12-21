@@ -97,3 +97,7 @@ export VDPAU_TRACE=2
 export VDPAU_NVIDIA_DEBUG=3
 export VDPAU_TRACE_FILE=chromium-vdpau.log
 ```
+
+# Screenshots
+
+![Screenshot 1](doc/img/vp9_sample_1.png "Screenshot 1")
