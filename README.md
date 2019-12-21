@@ -199,6 +199,8 @@ Most of this project was developed by cross-referencing these bits of source cod
 8. https://download.nvidia.com/XFree86/Linux-x86_64/440.44/README/vdpausupport.html
 9. https://github.com/Intel-Media-SDK/MediaSDK/blob/master/_studio/shared/umc/codec/vp9_dec/src/umc_vp9_bitstream.cpp
 10. https://vdpau.pages.freedesktop.org/libvdpau/struct_vdp_picture_info_v_p9.html
+11. https://chromium.googlesource.com/chromium/src/+/master/media/filters/vp9_parser.cc
+12. https://cs.chromium.org/chromium/src/media/gpu/vaapi/vp9_vaapi_video_decoder_delegate.cc?sq=package:chromium&dr=CSs&g=0
 
 # Screenshots
 
