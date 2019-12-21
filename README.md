@@ -41,8 +41,10 @@ That's how I started. It includes information on everything you need, except thi
    ![NVIDIA VDPAU Settings VP9](doc/img/nvidia-settings-vp9.png "NVIDIA VDPAU Settings VP9")
 
 3. Chromium with VAAPI patch (NOT Google Chrome)
-4. Latest headers for VDPAU with VP9 patch (for compiling this patch): https://gitlab.freedesktop.org/ManojBonda/libvdpau
+4. Latest headers for VDPAU with VP9 patch (for compiling this patch): https://gitlab.freedesktop.org/vdpau/libvdpau.git
    This requires meson to compile.
+   
+   (Note: do NOT use the initial VP9 patch code on freedesktop/ManojBonda/libvdpau but use freedesktop/vdpau/libvdpau. The VP9 structure is invalid in the initial code and causes lots of problems. The author hadn't fixed it in his own fork branch.)
    
         $ git clone https://gitlab.freedesktop.org/vdpau/libvdpau.git
         $ cd libvdpau
