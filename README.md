@@ -170,7 +170,7 @@ Using VDPAU_VIDEO_DEBUG/VDPAU_VIDEO_TRACE and dump_* commands is a good way to t
 
 I also compared VDPAU calls to ffmpeg output for testing (although keep in mind ffmpeg may also call get_bits yuv commands to get video surface data for encoding). This is just a simple command to convert the stream to a TS file, but in the process it uses VDPAU for decoding.
 
-(Note: requires ffmpeg with VP9 support! may need to compile manually)
+(Note: requires ffmpeg with VDPAU VP9 support! I had to compile the latest git revision manually)
 
 ```
 rm -f /tmp/out1.ts
