@@ -15,6 +15,17 @@ To check whether your GPU can decode VP9, please check the NVDEC support matrix.
 
 https://developer.nvidia.com/video-encode-decode-gpu-support-matrix
 
+Note that 8k currently may not work properly, but 4k and below should work fine. This is based on my testing with a GTX 1060. 8k seems to allocate too many surfaces and run out of resources. I'm currently investigating if there's any way to remedy that, but will likely require modifications to chromium-vaapi.
+
+# Original author of vdpau-va-driver
+
+https://github.com/freedesktop/vdpau-driver
+
+  libva-vdpau-driver
+  A VDPAU-based backend for VA-API
+
+  Copyright (C) 2009-2011 Splitted-Desktop Systems
+
 # Requirements
 
 I recommend following this guide. https://www.linuxuprising.com/2018/08/how-to-enable-hardware-accelerated.html
@@ -29,14 +40,19 @@ That's how I started. It includes information on everything you need, except thi
 3. Chromium with VAAPI patch (NOT Google Chrome)
 4. VDPAU latest include headers (for compiling this patch): https://gitlab.freedesktop.org/ManojBonda/libvdpau
 
-# Original author of vdpau-va-driver
+# Compiling
 
-https://github.com/freedesktop/vdpau-driver
+Don't forget to use the latest VDPAU headers with VP9 support. There may be other dependencies depending on your distro.
 
-  libva-vdpau-driver
-  A VDPAU-based backend for VA-API
+    $ git clone https://github.com/xtknight/vdpau-va-driver-vp9.git
+    $ cd vdpau-va-driver-vp9
+    $ ./autogen.sh --prefix=/usr
+    $ make
+    $ sudo make install
 
-  Copyright (C) 2009-2011 Splitted-Desktop Systems
+# Using
+
+Launch chromium-vaapi without using extensions like h264ify and try some 4k videos. Right click video and click 'Stats for Nerds' to ensure codec starts with vp09.00. (VP9 profile 0). Here's an example 4k@60fps video in VP9 (as of writing): https://www.youtube.com/watch?v=aqz-KE-bpKQ
 
 # Debugging
 
