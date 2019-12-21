@@ -185,6 +185,21 @@ ffmpeg -hwaccel vdpau -i ~/Downloads/Profile_0_8bit/buf/crowd_run_1080X512_fr30_
    
 2. VP9 8k test video: https://commons.wikimedia.org/wiki/File:First_8K_Video_from_Space_-_Ultra_HD_VP9.webm
 
+## References
+
+Most of this project was developed by cross-referencing these bits of source code and resources, along with lots of guessing.
+
+1. http://git.videolan.org/?p=ffmpeg.git;a=blob;f=libavcodec/vp9.c;h=0eb92f8c08764c425c08c57393787b5c5d1d3808;hb=HEAD
+2. https://github.com/FFmpeg/FFmpeg/blob/1054752c563cbe978f16010ed57dfa23a41ee490/libavcodec/vdpau_vp9.c
+3. https://intel.github.io/libva/va__dec__vp9_8h_source.html
+4. https://vdpau.pages.freedesktop.org/libvdpau/vdpau_8h_source.html
+5. https://storage.googleapis.com/downloads.webmproject.org/docs/vp9/vp9-bitstream-specification-v0.6-20160331-draft.pdf
+6. https://chromium.googlesource.com/chromium/src/+/master/media/filters/vp9_uncompressed_header_parser.cc
+7. https://chromium.googlesource.com/chromium/src/+/master/media/filters/vp9_compressed_header_parser.cc
+8. https://download.nvidia.com/XFree86/Linux-x86_64/440.44/README/vdpausupport.html
+9. https://github.com/Intel-Media-SDK/MediaSDK/blob/master/_studio/shared/umc/codec/vp9_dec/src/umc_vp9_bitstream.cpp
+10. https://vdpau.pages.freedesktop.org/libvdpau/struct_vdp_picture_info_v_p9.html
+
 # Screenshots
 
 ![Screenshot 1](doc/img/vp9_sample_1.png "Screenshot 1")
