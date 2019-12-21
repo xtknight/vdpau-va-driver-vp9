@@ -69,7 +69,7 @@ Launch chromium-vaapi without using extensions like h264ify and try some 4k vide
 
 Right click the YouTube video and click 'Stats for Nerds' to ensure codec starts with vp09.00. (VP9 profile 0). Here's an example 4k@60fps video in VP9 (as of writing): https://www.youtube.com/watch?v=aqz-KE-bpKQ
 
-Depending on how fast your CPU is, it may actually hard to *prove* that the GPU is being used. Although those with slower CPUs will probably notice a lot easier. There's still going to be some CPU usage, so don't be surprised. Exactly why, I'm not sure, but may be related to issues in the frame handling that can be optimized. And I need to do more testing to see how much of a problem that really is. Based on nvidia-smi, my GTX 1060 seems to be around 25-40% usage for 4k@60fps if the video is playing and only around 15% if the video is paused.
+Depending on how fast your CPU is, it may actually hard to *prove* that the GPU is being used. Although those with slower CPUs will probably notice a lot easier. There's still going to be some CPU usage, so don't be surprised. Exactly why, I'm not sure, but may be related to issues in the frame handling that can be optimized. And I need to do more testing to see how much of a problem that really is. Based on nvidia-smi, my GTX 1060 seems to be around 25-40% usage for 4k@60fps if the video is playing and only around 15% if the video is paused. For me CPU usage is reduced from around ~450% (multi-core) to around ~50-100% if I disable HW accel in Chromium through the flags. It's a big improvement, at least.
 
 # Debugging
 
