@@ -42,7 +42,9 @@ That's how I started. It includes information on everything you need, except thi
 
 # Limitations and Disclaimers
 
-This is extremely experimental, and roughly half of the VP9 codec probably isn't even implemented at all. That's denoted by 'XXX' comments in the code. (It seems that the other codecs implemented in the wrapper may also be missing some features.) But, based on my testing I haven't found significant video artifacts yet. It appears that most videos may not use the features that aren't implemented or maybe they just don't make enough of a difference visually, or I just haven't noticed yet; I'm really not sure, but I'm just providing this in good faith because it "seems to work". I would appreciate bug reports, contributions, etc. though and will try to look at them when I have time.
+Don't expect a lot. This may crash, hang, just not work at all, or result in video artifacts. This is extremely experimental, and roughly half of the VP9 codec probably isn't even implemented at all. That's denoted by 'XXX' comments in the code. (It seems that the other codecs implemented in the wrapper may also be missing some features.)
+
+That being said, based on my testing I haven't found significant video artifacts or all-out crashes yet. It appears that most videos may not use the features that aren't implemented or maybe they just don't make enough of a difference visually, or I just haven't noticed yet; I'm really not sure, but I'm just providing this in good faith because it "seems to work". I would appreciate bug reports, contributions, etc. though and will try to look at them when I have time.
 
 # Future Work
 
