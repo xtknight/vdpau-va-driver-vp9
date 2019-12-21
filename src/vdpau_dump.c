@@ -59,8 +59,6 @@ const char *string_of_VABufferType(VABufferType type)
         _(VAEncSequenceParameterBufferType);
         _(VAEncPictureParameterBufferType);
         _(VAEncSliceParameterBufferType);
-        _(VAEncH264VUIBufferType);
-        _(VAEncH264SEIBufferType);
 #endif
 #if VA_CHECK_VERSION(0,31,1)
         _(VAQMatrixBufferType);

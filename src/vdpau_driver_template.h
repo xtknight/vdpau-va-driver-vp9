@@ -115,6 +115,13 @@ struct VA_DRIVER_VTABLE {
 		int *num_attribs		/* out */
 	);
 
+	VAStatus (*vaQuerySurfaceAttributes) (
+		VADisplay           dpy,
+		VAConfigID          config_id,
+		VASurfaceAttrib    *attrib_list,   /* out */
+		unsigned int       *num_attribs    /* out */
+	);
+
 	VAStatus (*vaCreateSurfaces) (
 		VADriverContextP ctx,
 		int width,
@@ -589,6 +596,7 @@ static VAStatus FUNC(Initialize)(VA_DRIVER_CONTEXT_P ctx)
     vtable->vaCreateConfig                  = vdpau_CreateConfig;
     vtable->vaDestroyConfig                 = vdpau_DestroyConfig;
     vtable->vaGetConfigAttributes           = vdpau_GetConfigAttributes;
+    vtable->vaQuerySurfaceAttributes        = vdpau_QuerySurfaceAttributes;
     vtable->vaCreateSurfaces                = vdpau_CreateSurfaces;
     vtable->vaDestroySurfaces               = vdpau_DestroySurfaces;
     vtable->vaCreateContext                 = vdpau_CreateContext;

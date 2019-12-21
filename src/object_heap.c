@@ -272,8 +272,10 @@ object_heap_destroy(object_heap_p heap)
         ASSERT(obj->next_free != ALLOCATED);
     }
 
-    for (i = 0; i < heap->heap_size / heap->heap_increment; i++) {
-        free(heap->bucket[i]);
+    if (heap->bucket) {
+        for (i = 0; i < heap->heap_size / heap->heap_increment; i++) {
+            free(heap->bucket[i]);
+        }
     }
 
     pthread_mutex_destroy(&heap->mutex);

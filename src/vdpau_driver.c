@@ -174,7 +174,7 @@ vdpau_common_Terminate(vdpau_driver_data_t *driver_data)
     }
     vdpau_gate_exit(driver_data);
 
-    if (driver_data->vdp_dpy) {
+    if (!driver_data->x_fallback && driver_data->vdp_dpy) {
         XCloseDisplay(driver_data->vdp_dpy);
         driver_data->vdp_dpy = NULL;
     }
@@ -187,9 +187,14 @@ vdpau_common_Initialize(vdpau_driver_data_t *driver_data)
     /* Create a dedicated X11 display for VDPAU purposes */
     const char * const x11_dpy_name = XDisplayString(driver_data->x11_dpy);
     driver_data->vdp_dpy = XOpenDisplay(x11_dpy_name);
-    if (!driver_data->vdp_dpy)
-        return VA_STATUS_ERROR_UNKNOWN;
-
+    /* Fallback to existing X11 display */
+    driver_data->x_fallback = false;
+    if (!driver_data->vdp_dpy) {
+        driver_data->x_fallback = true;
+        driver_data->vdp_dpy = driver_data->x11_dpy;
+        printf("Failed to create dedicated X11 display!\n");
+    }
+        
     VdpStatus vdp_status;
     driver_data->vdp_device = VDP_INVALID_HANDLE;
     vdp_status = vdp_device_create_x11(

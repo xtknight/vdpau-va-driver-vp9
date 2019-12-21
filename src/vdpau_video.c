@@ -309,6 +309,54 @@ int surface_remove_association(
     return -1;
 }
 
+// vaQuerySurfaceAttributes
+VAStatus
+vdpau_QuerySurfaceAttributes(
+    VADriverContextP    ctx,
+    VAConfigID          config_id,
+    VASurfaceAttrib    *attrib_list,
+    unsigned int       *num_attribs
+)
+{
+    VDPAU_DRIVER_DATA_INIT;
+
+    object_config_p obj_config;
+    if ((obj_config = VDPAU_CONFIG(config_id)) == NULL)
+        return VA_STATUS_ERROR_INVALID_CONFIG;
+
+    if (!attrib_list && !num_attribs)
+        return VA_STATUS_ERROR_INVALID_PARAMETER;
+
+    if (!attrib_list) {
+        *num_attribs = 2;
+        return VA_STATUS_SUCCESS;
+    }
+
+    if (*num_attribs < 2) {
+        *num_attribs = 2;
+        return VA_STATUS_ERROR_MAX_NUM_EXCEEDED;
+    }
+
+    VdpDecoderProfile vdp_profile;
+    uint32_t max_width, max_height;
+    vdp_profile = get_VdpDecoderProfile(obj_config->profile);
+    if (!get_max_surface_size(driver_data, vdp_profile, &max_width, &max_height))
+        return VA_STATUS_ERROR_UNSUPPORTED_PROFILE;
+
+    if (attrib_list) {
+        attrib_list[0].type = VASurfaceAttribMaxWidth;
+        attrib_list[0].flags = VA_SURFACE_ATTRIB_GETTABLE;
+        attrib_list[0].value.type = VAGenericValueTypeInteger;
+        attrib_list[0].value.value.i = max_width;
+        attrib_list[1].type = VASurfaceAttribMaxHeight;
+        attrib_list[1].flags = VA_SURFACE_ATTRIB_GETTABLE;
+        attrib_list[1].value.type = VAGenericValueTypeInteger;
+        attrib_list[1].value.value.i = max_height;
+    }
+
+    return VA_STATUS_SUCCESS;
+}
+
 // vaDestroySurfaces
 VAStatus
 vdpau_DestroySurfaces(

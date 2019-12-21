@@ -165,6 +165,15 @@ vdpau_QueryConfigAttributes(
     int                *num_attribs
 ) attribute_hidden;
 
+// vaQuerySurfaceAttributes
+VAStatus
+vdpau_QuerySurfaceAttributes(
+    VADriverContextP    ctx,
+    VAConfigID          config_id,
+    VASurfaceAttrib    *attrib_list,
+    unsigned int       *num_attribs
+) attribute_hidden;
+
 // vaCreateSurfaces
 VAStatus
 vdpau_CreateSurfaces(
@@ -270,14 +279,15 @@ vdpau_CreateSurfaceFromCIFrame(
 ) attribute_hidden;
 
 // vaCreateSurfaceFromV4L2Buf
-VAStatus
+// XXX: compile problem?
+/*VAStatus
 vdpau_CreateSurfaceFromV4L2Buf(
     VADriverContextP    ctx,
     int                 v4l2_fd,
     struct v4l2_format *v4l2_fmt,
     struct v4l2_buffer *v4l2_buf,
     VASurfaceID        *surface
-) attribute_hidden;
+) attribute_hidden;*/
 
 // vaCopySurfaceToBuffer
 VAStatus
