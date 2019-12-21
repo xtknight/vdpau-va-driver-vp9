@@ -86,7 +86,7 @@ That being said, based on my testing I haven't found significant video artifacts
 
 # Compiling
 
-Please check the Requirements section, or else nothing below will work. Also, don't forget to use the latest VDPAU headers with VP9 support. There may be other dependencies depending on your distro.
+Please check the Requirements section, or else nothing below will work. Also, don't forget to use the latest official VDPAU headers with VP9 support and the proper updated VP9 structure definition (avoid using other branches of the official code as they may cause video corruption). There may be other dependencies depending on your distro.
 
     $ git clone https://github.com/xtknight/vdpau-va-driver-vp9.git
     $ cd vdpau-va-driver-vp9
