@@ -44,7 +44,7 @@ That's how I started. It includes information on everything you need, except thi
 4. Latest headers for VDPAU with VP9 patch (for compiling this patch): https://gitlab.freedesktop.org/ManojBonda/libvdpau
    This requires meson to compile.
    
-        $ git clone https://gitlab.freedesktop.org/ManojBonda/libvdpau.git
+        $ git clone https://gitlab.freedesktop.org/vdpau/libvdpau.git
         $ cd libvdpau
         $ meson -Dprefix=/usr build
         $ ninja -C build
