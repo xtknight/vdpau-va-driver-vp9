@@ -1,0 +1,1 @@
+debian/tmp@LIBVA_DRIVERS_PATH@/*.so

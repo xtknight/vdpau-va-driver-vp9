@@ -1,0 +1,174 @@
+libva-vdpau-driver NEWS -- summary of changes.  2012-10-05
+Copyright (C) 2009-2011 Splitted-Desktop Systems
+
+Version 0.7.4 - 05.Oct.2012
+* Use upstream libva version
+* Avoid X11 socket leak (Marco De Michele)
+* Fix MPEG-2 decoding from gstreamer-vaapi
+* Fix compatibility glue for vaBufferInfo()
+* Fix subpicture blend state (Holger Kaelberer)
+* Fix multithreaded issues (Philip Lorenz, Krzysztof Kotlenga)
+* Add support for global-alpha subpictures (Holger Kaelberer)
+
+Version 0.7.3 - 26.Feb.2011
+* Add compatibility glue with libva >= 1.0.8
+* Fix possible crash when rendering multiple surfaces at once
+* Fix build if no OpenGL header is available (libva >= 0.31.1)
+* Fix VA/GLX build with upstream libva and newer OpenGL headers
+
+Version 0.7.2 - 08.Oct.2010
+* Drop explicit link against libva
+* Fix detection of the NVIDIA driver version
+* Add debug info through VDPAU_VIDEO_DEBUG=<level>
+* Add compatibility glue with original VA-API 0.31.x
+* Allow high-quality scaling through vaPutSurface() (VA_FILTER_SCALING_HQ)
+
+Version 0.7.1 - 05.Oct.2010
+* Fix X11 display locking issues
+* Add support for GL_TEXTURE_RECTANGLE_ARB textures
+* Allow SMPTE-240M colorspace conversion (VA_SRC_SMPTE_240)
+
+Version 0.7.0 - 09.Aug.2010
+* Add support for VA-API 0.31.1-sds1
+* Use GL_NV_vdpau_interop extension for VA/GLX
+* Optimize rendering of multiple surfaces per window
+
+Version 0.6.9 - 17.Apr.2010
+* Fix deinterlacing
+* Fix VA context destruction
+* Fix vaCreateConfig() to validate profile
+* Fix output surface creation code to detect errors
+
+Version 0.6.8 - 13.Apr.2010
+* Drop superfluous asserts
+* Fix OpenGL rendering for XBMC
+* Fix rendering when the window size changed
+* Fix MPEG-4 decoding of video clips with B-frames
+
+Version 0.6.7 - 04.Apr.2010
+* Fix build without GLX support
+* Fix VA/GLX to preserve caller's GL context
+* Fix vaCopySurfaceGLX() to handle GL_RGBA8 textures
+
+Version 0.6.6 - 18.Mar.2010
+* Add I420 image format
+* Allocate image data on 16-byte boundaries
+* Fix vaCreateImage() to cleanup data on error
+* Fix vaTerminate() to destroy the VDPAU device
+* Add support for VA-API 0.31.0-sds6
+
+Version 0.6.5 - 08.Mar.2010
+* Fix display queue initialization
+* Fix internal functions linkage. i.e. don't export internals
+* Fix another VOP header reconstruction bug for MPEG-4 decoding
+
+Version 0.6.4 - 01.Mar.2010
+* Fix rendering of multiple surfaces per window
+* Fix rendering of multiple subpictures per surface
+* Add support for VA-API 0.31.0-sds5
+* Add support for VA_CLEAR_DRAWABLE to vaPutSurface()
+
+Version 0.6.3 - 27.Jan.2010
+* Fix video mixer caching
+* Fix rendering of subpictures
+* Add background-color display attribute
+
+Version 0.6.2 - 19.Jan.2010
+* Fix vaGetImage() with YV12 format
+* Fix window resize by less than 256 pixels in either dimension
+* Allow vaPutSurface() to render to multiple drawables from a single surface
+
+Version 0.6.1 - 21.Dec.2009
+* Set VDPAU_VIDEO_DPB to 0, i.e. use H.264 DPB from libVA
+* Fix VOP header reconstruction bug for MPEG-4 decoding
+* Fix build with older VDPAU headers (without MPEG-4 support)
+* Fix image palette allocation and conversion to VDPAU format
+
+Version 0.6.0 - 27.Nov.2009
+* Add MPEG-4 decoding support
+* Add support for bob deinterlacing
+* Add brightness/contrast/hue/saturation display attributes
+* Allow ITU-R BT.601/709 colorspace conversion flags to vaPutSurface()
+
+Version 0.5.2 - 15.Oct.2009
+* Add indexed color subpicture formats
+* Fix and optimize rendering of subpictures
+* Fix vaCreateImage() to allow RGBA subpictures
+* Allocate VdpOutputSurface on-demand in vaGetImage() for RGBA formats
+* Make it possible to vaPutSurface() a surface not bound to any VA context
+
+Version 0.5.1 - 12.Oct.2009
+* Use VA_INVALID_ID for invalid contextes
+* Fix RGB image formats to have a unique FOURCC
+* Fix vaCreateImage() when output VAImage points to stack
+* Fix vaPutSurface() to fail gracefully if the Drawable is not ready
+
+Version 0.5.0 - 06.Oct.2009
+* Add support for subpictures
+* Add vaPutImage() though VDPAU has limited API
+* Handle vaGetImage() with partial region in RGBA format
+
+Version 0.4.2 - 28.Sep.2009
+* Fix vaPutSurface() display bounds
+* Fix vaGetImage() with YV12 pixels
+
+Version 0.4.1 - 10.Sep.2009
+* Add VADisplayAttributes
+* Add support for VA-API 0.31
+* Add support for OpenGL extensions to VA-API (v3)
+* Fix vaQueryConfigEntrypoints() to first check the profile is supported
+
+Version 0.4.0 - 27.Aug.2009
+* Add support for OpenGL extensions to VA-API
+* Fix VAImageID pool memory leak in vaTerminate()
+
+Version 0.3.3 - 25.Aug.2009
+* Fix H.264 DPB synchronization
+* Fix vaGetImage() with YV12 format
+* Add support for vaSyncSurface() and vaQuerySurfaceStatus()
+
+Version 0.3.2 - 25.Jun.2009
+* Add support for VA-API 0.30
+
+Version 0.3.1 - 23.Apr.2009
+* Add RGBA image formats, including for vaGetImage().
+
+Version 0.3.0 - 16.Apr.2009
+* Don't expose RGBA formats in vaQueryImageFormats()
+* Add support for VAImage related functions:
+  - vaCreateImage(), vaDestroyImage()
+  - vaGetImage() for full surface readback only (i.e. no partial reads)
+
+Version 0.2.6 - 20.Mar.2009
+* Handle VC-1 skipped P-frames
+
+Version 0.2.5 - 18.Mar.2009
+* Handle multiple VASliceDataBuffers
+* Handle H.264 bitstreams without start_code_prefix_one_3byte
+* Fix destruction of output surfaces
+* Fix VC-1 picture info fields (pquant and deblockEnable)
+
+Version 0.2.4 - 03.Mar.2009
+* Upgrade to VA-API 0.29.0-sds7 extensions
+* Fix corruption decoding field-coded pictures in MBAFF H.264 clips
+
+Version 0.2.3 - 25.Feb.2009
+* Add vaQueryImageFormats()
+* Sync with VDPAU additions from NVIDIA drivers 180.35
+* Allow tracing of control structures through VDPAU_VIDEO_TRACE=1
+* Fix decoding of some full HD bitstreams with many reference frames
+
+Version 0.2.2 - 05.Feb.2009
+* Fix VC-1 decoding of bitstreams with B-frames
+* Fix VdpPictureInfoH264::is_reference (use reference_pic_flag)
+
+Version 0.2.1 - 28.Jan.2009
+* Fix VC-1 decoding
+* Add debian packaging rules
+
+Version 0.2.0 - 23.Jan.2009
+* Add support for VC-1
+* Relax size requirements in vaPutSurface()
+
+Version 0.1.0 - 16.Jan.2009
+* Initial public release
