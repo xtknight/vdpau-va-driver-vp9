@@ -1,5 +1,5 @@
 # vdpau-va-driver-vp9
-Experimental VP9 codec support for vdpau-va-driver (NVIDIA VDPAU-VAAPI wrapper) and chromium-vaapi. This has only been tested on Ubuntu 19.10 (Linux), so I'm really not sure if it works on anything else but "may". In my experience the patchsets vary per distro and some just didn't work at all on my Ubuntu, so keep this in mind when trying the patch. However, my modifications themselves should not be distro-specific.
+Experimental VP9 codec support for vdpau-va-driver (NVIDIA VDPAU-VAAPI wrapper) and chromium-vaapi.
 
 Forked off Ubuntu vdpau-va-driver (which includes some patches over the original freedesktop code):
 https://launchpad.net/~saiarcot895/+archive/ubuntu/chromium-beta/+sourcepub/10036592/+listing-archive-extra
@@ -7,13 +7,15 @@ https://launchpad.net/~saiarcot895/+archive/ubuntu/chromium-beta/+sourcepub/1003
 C associative map taken from (and modified to use integer keys) [sorry, the modifications are really makeshift]:
 https://github.com/rxi/map
 
-# Notes
+# Explanation
 
 This adds experimental NVIDIA hardware video acceleration support to vdpau-va-driver for videos encoded using VP9 Profile 0 8-bit color depth. This seems to include most of the latest and greatest 4k and 8k videos I've used on YouTube that are hardest on the CPU, also available at lower resolutions in the same codec. As of writing, VP9 Profile 1-3 are not supported in the NVIDIA VDPAU library itself, so support for those cannot be added here either. VP8 also is not supported.
 
 To check whether your GPU can decode VP9, please check the NVDEC support matrix. I believe that this should match the VDPAU capabilities. The only exception is that VDPAU supports only Profile 0, so don't expect support for Profile 1-3 even if your GPU supports them in NVDEC. Also, VDPAU does not support VP8, H.265, or AV1 and may have other limitations.
 
 https://developer.nvidia.com/video-encode-decode-gpu-support-matrix
+
+This patch has only been tested on Ubuntu 19.10 (Linux), so I'm really not sure if it works on anything else but "may". In my experience the patchsets vary per distro and some just didn't work at all on my Ubuntu, so keep this in mind when trying the patch. However, my modifications themselves should not be distro-specific.
 
 Note that 8k currently may not work properly, but 4k and below should work fine. This is based on my testing with a GTX 1060. 8k seems to allocate too many surfaces and run out of resources. I'm currently investigating if there's any way to remedy that, but will likely require modifications to chromium-vaapi.
 
@@ -40,6 +42,14 @@ That's how I started. It includes information on everything you need, except thi
 
 3. Chromium with VAAPI patch (NOT Google Chrome)
 4. Latest headers for VDPAU with VP9 patch (for compiling this patch): https://gitlab.freedesktop.org/ManojBonda/libvdpau
+
+# Unimplemented Features
+
+1. Loop filter
+2. Segmentation (segmentFeatureMode) and some segmentation features
+3. modeRefLfEnabled, mbRefLfDelta, mbModeLfDelta
+
+Most of these are not implemented well or at all due to either: 1) VA-API not providing enough information, or 2) Me not knowing how to use the information that VA-API gives in order to achieve them. Any help for those with far more experience in video codecs is greatly appreciated; my experience with video codecs, VDPAU, and VA-API is all extremely limited.
 
 # Limitations and Disclaimers
 
