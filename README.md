@@ -20,10 +20,10 @@ https://developer.nvidia.com/video-encode-decode-gpu-support-matrix
 I recommend following this guide. https://www.linuxuprising.com/2018/08/how-to-enable-hardware-accelerated.html
 That's how I started. It includes information on everything you need, except this driver. Following the guide completely up to step 3 and then installing this driver will be enough if you're not sure what to do. If you know what you're doing, then you should skip installing vdpau-va-driver from that guide. Also, don't install h264ify if you're planning on using VP9.
 
-GPU with VP9 NVDEC decode support: https://developer.nvidia.com/video-encode-decode-gpu-support-matrix
-NVIDIA Linux video driver (only tested with 440.44 so far; not sure what the minimum version is for VP9 support)
-Chromium with VAAPI patch (NOT Google Chrome)
-VDPAU latest include headers (for compiling this patch): https://gitlab.freedesktop.org/ManojBonda/libvdpau
+1. GPU with VP9 NVDEC decode support: https://developer.nvidia.com/video-encode-decode-gpu-support-matrix
+2. NVIDIA Linux video driver (only tested with 440.44 so far; not sure what the minimum version is for VP9 support)
+3. Chromium with VAAPI patch (NOT Google Chrome)
+4. VDPAU latest include headers (for compiling this patch): https://gitlab.freedesktop.org/ManojBonda/libvdpau
 
 # Original author of vdpau-va-driver
 
