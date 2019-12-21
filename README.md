@@ -4,6 +4,9 @@ Experimental VP9 codec support for vdpau-va-driver (NVIDIA VDPAU-VAAPI wrapper) 
 Forked off Ubuntu vdpau-va-driver (which includes some patches over the original freedesktop code):
 https://launchpad.net/~saiarcot895/+archive/ubuntu/chromium-beta/+sourcepub/10036592/+listing-archive-extra
 
+C associative map taken from (and modified to use integer keys) [sorry, the modifications are really makeshift]:
+https://github.com/rxi/map
+
 # Notes
 
 Coming soon
