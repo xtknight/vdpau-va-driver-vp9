@@ -86,7 +86,7 @@ That being said, based on my testing I haven't found significant video artifacts
 
 # Compiling
 
-Please check the Requirements section, or else nothing below will work. Also, don't forget to use the latest official VDPAU headers with VP9 support and the proper updated VP9 structure definition (avoid using other branches of the official code as they may cause video corruption). There may be other dependencies depending on your distro.
+Please check the Requirements section, or else nothing below will work. There may be other dependencies depending on your distro. Also, don't forget to use the latest official VDPAU headers with VP9 support and the proper updated VP9 structure definition (avoid using other branches of the official code as they may cause video corruption). If you have reinstalled the VDPAU headers you will need to remake this driver from scratch AND close all instances of Chromium in order for the changes to take effect (make clean, make, sudo make install).
 
     $ git clone https://github.com/xtknight/vdpau-va-driver-vp9.git
     $ cd vdpau-va-driver-vp9
