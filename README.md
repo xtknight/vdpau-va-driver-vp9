@@ -67,7 +67,7 @@ That's how I started. It includes information on everything you need, except thi
 2. Segmentation (segmentFeatureMode) and some segmentation features
 3. modeRefLfEnabled, mbRefLfDelta, mbModeLfDelta
 
-Most of these are not implemented well or at all due to either: 1) VA-API not providing enough information, or 2) Me not knowing how to use the information that VA-API gives in order to achieve them. Any help for those with far more experience in video codecs is greatly appreciated; my experience with video codecs, VDPAU, and VA-API is all extremely limited.
+Most of these are not implemented well or at all due to either: 1) VA-API not providing "raw" enough information from the VP9 headers, or 2) Me not knowing how to use the information that VA-API gives in order to achieve them. Any help for those with far more experience in video codecs is greatly appreciated; my experience with video codecs, VDPAU, and VA-API is all extremely limited.
 
 # Limitations and Disclaimers
 
@@ -84,7 +84,7 @@ That being said, based on my testing I haven't found significant video artifacts
 
 # Compiling
 
-Don't forget to use the latest VDPAU headers with VP9 support. There may be other dependencies depending on your distro.
+Please check the Requirements section, or else nothing below will work. Also, don't forget to use the latest VDPAU headers with VP9 support. There may be other dependencies depending on your distro.
 
     $ git clone https://github.com/xtknight/vdpau-va-driver-vp9.git
     $ cd vdpau-va-driver-vp9
