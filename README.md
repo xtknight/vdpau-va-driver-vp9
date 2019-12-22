@@ -40,7 +40,7 @@ That's how I started. It includes information on everything you need, except thi
    
    As far as I know, all GPUs that include VP9 decode support work for videos between resolutions of 128x128 and 4096x2304 (within the 4k limit). There may be resource issues with 8k due to this driver using a mixer and/or chromium-vaapi demanding more surfaces than necessary. This is a work in progress.
 
-2. **NVIDIA Linux video driver** (only tested with 440.44 so far; not sure what the minimum version is for VP9 support)
+2. **NVIDIA Linux video driver** (for VP9 decode: 440.31 and higher only; I have only tested with 440.44 so far)
 
    vdpauinfo will not report VP9 support, unless you have a patched version of it (unsure if this is available yet). Use nvidia-settings instead. It should show "VP9" under X Screen/VDPAU Information/Base Information
    
