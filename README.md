@@ -33,15 +33,21 @@ https://github.com/freedesktop/vdpau-driver
 I recommend following this guide. https://www.linuxuprising.com/2018/08/how-to-enable-hardware-accelerated.html
 That's how I started. It includes information on everything you need, except this driver. Following the guide completely up to step 3 and then installing this driver will be enough if you're not sure what to do. If you know what you're doing, then you should skip installing vdpau-va-driver from that guide. Also, don't install h264ify if you're planning on using VP9.
 
-1. GPU with VP9 NVDEC decode support: https://developer.nvidia.com/video-encode-decode-gpu-support-matrix
-2. NVIDIA Linux video driver (only tested with 440.44 so far; not sure what the minimum version is for VP9 support)
+1. **GPU with VP9 NVDEC decode support:** https://developer.nvidia.com/video-encode-decode-gpu-support-matrix
+
+   More detailed information:
+   https://en.wikipedia.org/wiki/Nvidia_PureVideo#Table_of_GPUs_containing_a_PureVideo_SIP_block
+   
+   As far as I know, all GPUs that include VP9 decode support work for videos between resolutions of 128x128 and 4096x2304 (within the 4k limit). There may be resource issues with 8k due to this driver using a mixer and/or chromium-vaapi demanding more surfaces than necessary. This is a work in progress.
+
+2. **NVIDIA Linux video driver** (only tested with 440.44 so far; not sure what the minimum version is for VP9 support)
 
    vdpauinfo will not report VP9 support, unless you have a patched version of it (unsure if this is available yet). Use nvidia-settings instead. It should show "VP9" under X Screen/VDPAU Information/Base Information
    
    ![NVIDIA VDPAU Settings VP9](doc/img/nvidia-settings-vp9.png "NVIDIA VDPAU Settings VP9")
 
-3. Chromium with VAAPI patch (NOT Google Chrome)
-4. Latest headers for VDPAU with VP9 patch (for compiling this patch): https://gitlab.freedesktop.org/vdpau/libvdpau.git
+3. **Chromium with VAAPI patch** (NOT Google Chrome)
+4. **Latest headers for VDPAU with VP9 patch** (for compiling this patch): https://gitlab.freedesktop.org/vdpau/libvdpau.git
    This requires meson to compile.
    
    (Note: do NOT use the initial VP9 patch code on freedesktop/ManojBonda/libvdpau but use freedesktop/vdpau/libvdpau. The VP9 structure is invalid in the initial code and causes lots of problems. The author hadn't fixed it in his own fork branch.)
