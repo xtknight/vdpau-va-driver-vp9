@@ -54,7 +54,7 @@ That's how I started. It includes information on everything you need, except thi
    
         $ git clone https://gitlab.freedesktop.org/vdpau/libvdpau.git
         $ cd libvdpau
-        $ meson -Dprefix=/usr build
+        $ meson --prefix=/usr build
         $ ninja -C build
         $ sudo ninja -C build install
    
