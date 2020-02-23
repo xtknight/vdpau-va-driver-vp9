@@ -23,6 +23,7 @@
 
 #include "vdpau_driver.h"
 #include "vdpau_decode.h"
+#include <linux/videodev2.h>
 
 typedef struct SubpictureAssociation *SubpictureAssociationP;
 struct SubpictureAssociation {

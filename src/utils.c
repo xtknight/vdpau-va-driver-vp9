@@ -18,10 +18,17 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  */
 
+#if __STDC_VERSION__ >= 199901L
+#define _XOPEN_SOURCE 700
+#else
+#define _XOPEN_SOURCE 500
+#endif /* __STDC_VERSION__ */
+
 #include "sysdeps.h"
 #include "utils.h"
 #include <time.h>
 #include <errno.h>
+#include <sys/time.h>
 
 #define DEBUG 1
 #include "debug.h"
@@ -186,16 +193,13 @@ realloc_buffer(
 // Lookup for substring NAME in string EXT using SEP as separators
 int find_string(const char *name, const char *ext, const char *sep)
 {
-    const char *end;
-    int name_len, n;
-
     if (name == NULL || ext == NULL)
         return 0;
 
-    end = ext + strlen(ext);
-    name_len = strlen(name);
+    const char *end = ext + strlen(ext);
+    int name_len = strlen(name);
     while (ext < end) {
-        n = strcspn(ext, sep);
+        int n = strcspn(ext, sep);
         if (n == name_len && strncmp(name, ext, n) == 0)
             return 1;
         ext += (n + 1);

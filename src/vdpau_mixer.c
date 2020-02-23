@@ -21,6 +21,9 @@
 #include "sysdeps.h"
 #include "vdpau_mixer.h"
 #include "vdpau_video.h"
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846
+#endif
 #include <math.h>
 
 #define VDPAU_MAX_VIDEO_MIXER_PARAMS    4
