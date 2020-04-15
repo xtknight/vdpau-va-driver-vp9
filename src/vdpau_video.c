@@ -500,6 +500,21 @@ vdpau_CreateSurfaces(
     }
     return va_status;
 }
+// vaCreateSurfaces2
+VAStatus
+vdpau_CreateSurfaces2(
+    VADriverContextP    ctx,
+    unsigned int        format,
+    unsigned int        width,
+    unsigned int        height,
+    VASurfaceID         *surfaces,
+    unsigned int        num_surfaces,
+    VASurfaceAttrib     *attrib_list,
+    unsigned int        num_attribs
+)
+{
+    return vdpau_CreateSurfaces(ctx, width, height, format, num_surfaces, surfaces); 
+}
 
 // vaDestroyContext
 VAStatus vdpau_DestroyContext(VADriverContextP ctx, VAContextID context)

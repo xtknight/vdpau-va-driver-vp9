@@ -452,6 +452,19 @@ struct VA_DRIVER_VTABLE {
                 void **buffer
         );
 #endif
+
+        VAStatus
+        (*vaCreateSurfaces2)(
+            VADriverContextP    ctx,
+            unsigned int        format,
+            unsigned int        width,
+            unsigned int        height,
+            VASurfaceID        *surfaces,
+            unsigned int        num_surfaces,
+            VASurfaceAttrib    *attrib_list,
+            unsigned int        num_attribs
+        );
+
 };
 
 /* Driver context */
@@ -662,7 +675,7 @@ static VAStatus FUNC(Initialize)(VA_DRIVER_CONTEXT_P ctx)
     vtable->vaDbgCopySurfaceToBuffer        = vdpau_DbgCopySurfaceToBuffer;
 #endif
 #endif
-
+    vtable->vaCreateSurfaces2               = vdpau_CreateSurfaces2;
 #if VA_INIT_GLX
     VA_DRIVER_VTABLE_GLX_P const glx_vtable = FUNC(GetVTableGLX)(ctx);
     if (!glx_vtable)
