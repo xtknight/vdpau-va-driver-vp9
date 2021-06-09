@@ -21,6 +21,9 @@
 #ifndef VA_OBJECT_HEAP_H
 #define VA_OBJECT_HEAP_H
 
+#include <sys/types.h>
+#include <pthread.h>
+
 #define OBJECT_HEAP_OFFSET_MASK 0x7f000000
 #define OBJECT_HEAP_ID_MASK     0x00ffffff
 
