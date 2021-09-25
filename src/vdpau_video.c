@@ -545,12 +545,6 @@ VAStatus vdpau_DestroyContext(VADriverContextP ctx, VAContextID context)
         obj_context->vdp_decoder = VDP_INVALID_HANDLE;
     }
 
-    destroy_dead_va_buffers(driver_data, obj_context);
-    if (obj_context->dead_buffers) {
-        free(obj_context->dead_buffers);
-        obj_context->dead_buffers = NULL;
-    }
-
     if (obj_context->render_targets) {
         for (i = 0; i < obj_context->num_render_targets; i++) {
             object_surface_p obj_surface;
@@ -569,8 +563,6 @@ VAStatus vdpau_DestroyContext(VADriverContextP ctx, VAContextID context)
     obj_context->picture_height         = 0;
     obj_context->num_render_targets     = 0;
     obj_context->flags                  = 0;
-    obj_context->dead_buffers_count     = 0;
-    obj_context->dead_buffers_count_max = 0;
 
     object_heap_free(&driver_data->context_heap, (object_base_p)obj_context);
     return VA_STATUS_SUCCESS;
@@ -629,9 +621,6 @@ vdpau_CreateContext(
     obj_context->max_ref_frames         = -1;
     obj_context->render_targets         = (VASurfaceID *)
         calloc(num_render_targets, sizeof(VASurfaceID));
-    obj_context->dead_buffers           = NULL;
-    obj_context->dead_buffers_count     = 0;
-    obj_context->dead_buffers_count_max = 0;
     obj_context->vdp_codec              = get_VdpCodec(vdp_profile);
     obj_context->vdp_profile            = vdp_profile;
     obj_context->vdp_decoder            = VDP_INVALID_HANDLE;

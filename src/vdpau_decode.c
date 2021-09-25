@@ -1565,7 +1565,6 @@ vdpau_BeginPicture(
         return VA_STATUS_ERROR_UNKNOWN;
     }
 
-    destroy_dead_va_buffers(driver_data, obj_context);
     return VA_STATUS_SUCCESS;
 }
 
@@ -1607,25 +1606,6 @@ vdpau_RenderPicture(
 
         if (!translate_buffer(driver_data, obj_context, obj_buffer))
             return VA_STATUS_ERROR_UNSUPPORTED_BUFFERTYPE;
-        /* Release any buffer that is not VASliceDataBuffer */
-        /* VASliceParameterBuffer is also needed to check for start_codes */
-        switch (obj_buffer->type) {
-        case VASliceParameterBufferType:
-        case VASliceDataBufferType:
-            schedule_destroy_va_buffer(driver_data, obj_buffer);
-            break;
-        case VAPictureParameterBufferType:
-            /* Preserve VAPictureParameterBufferMPEG4 */
-            if (obj_context->vdp_codec == VDP_CODEC_MPEG4) {
-                schedule_destroy_va_buffer(driver_data, obj_buffer);
-                break;
-            }
-            /* fall-through */
-        default:
-            destroy_va_buffer(driver_data, obj_buffer);
-            break;
-        }
-        buffers[i] = VA_INVALID_BUFFER;
     }
 
     return VA_STATUS_SUCCESS;
@@ -1702,9 +1682,6 @@ vdpau_EndPicture(
 
     /* XXX: assume we are done with rendering right away */
     obj_context->current_render_target = VA_INVALID_SURFACE;
-
-    /* Release pending buffers */
-    destroy_dead_va_buffers(driver_data, obj_context);
 
     return va_status;
 }

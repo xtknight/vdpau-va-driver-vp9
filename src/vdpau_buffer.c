@@ -28,28 +28,6 @@
 #define DEBUG 1
 #include "debug.h"
 
-// Destroy dead VA buffers
-void
-destroy_dead_va_buffers(
-    vdpau_driver_data_t *driver_data,
-    object_context_p     obj_context
-)
-{
-    object_buffer_p obj_buffer;
-    unsigned int i;
-
-    if (obj_context->dead_buffers_count < 1)
-        return;
-
-    ASSERT(obj_context->dead_buffers);
-    for (i = 0; i < obj_context->dead_buffers_count; i++) {
-        obj_buffer = VDPAU_BUFFER(obj_context->dead_buffers[i]);
-        ASSERT(obj_buffer);
-        destroy_va_buffer(driver_data, obj_buffer);
-    }
-    obj_context->dead_buffers_count = 0;
-}
-
 // Create VA buffer object
 object_buffer_p
 create_va_buffer(
@@ -102,30 +80,6 @@ destroy_va_buffer(
         obj_buffer->buffer_data = NULL;
     }
     object_heap_free(&driver_data->buffer_heap, (object_base_p)obj_buffer);
-}
-
-// Schedule VA buffer object for destruction
-void
-schedule_destroy_va_buffer(
-    vdpau_driver_data_p driver_data,
-    object_buffer_p     obj_buffer
-)
-{
-    object_context_p obj_context = VDPAU_CONTEXT(obj_buffer->va_context);
-    if (!obj_context)
-        return;
-
-    realloc_buffer(
-        (void **)&obj_context->dead_buffers,
-        &obj_context->dead_buffers_count_max,
-        16 + obj_context->dead_buffers_count,
-        sizeof(*obj_context->dead_buffers)
-    );
-
-    ASSERT(obj_context->dead_buffers);
-    obj_context->dead_buffers[obj_context->dead_buffers_count] = obj_buffer->base.id;
-    obj_context->dead_buffers_count++;
-    obj_buffer->delayed_destroy = 1;
 }
 
 // vaCreateBuffer
