@@ -55,9 +55,6 @@ struct object_context {
     int                          flags;
     int                          max_ref_frames;
     VASurfaceID                 *render_targets;
-    VABufferID                  *dead_buffers;
-    uint32_t                     dead_buffers_count;
-    uint32_t                     dead_buffers_count_max;
     void                        *last_pic_param;
     void                        *last_slice_params;
     unsigned int                 last_slice_params_count;
